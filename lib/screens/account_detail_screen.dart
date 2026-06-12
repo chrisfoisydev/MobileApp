@@ -1,0 +1,220 @@
+import 'package:flutter/material.dart';
+
+import '../data/formatting.dart';
+import '../data/models.dart';
+import '../theme/app_theme.dart';
+import '../widgets/becu_logo.dart';
+import 'account_tabs/details_tab.dart';
+import 'account_tabs/manage_card_tab.dart';
+import 'account_tabs/transactions_tab.dart';
+
+/// Account view shared by the Transactions, Manage Card and Details
+/// designs: balance header, action buttons and the three-tab switcher.
+class AccountDetailScreen extends StatefulWidget {
+  const AccountDetailScreen({super.key, required this.account, this.initialTab = 0});
+
+  final Account account;
+  final int initialTab;
+
+  @override
+  State<AccountDetailScreen> createState() => _AccountDetailScreenState();
+}
+
+class _AccountDetailScreenState extends State<AccountDetailScreen> {
+  static const _tabs = ['Transactions', 'Manage Card', 'Details'];
+
+  late int _tabIndex = widget.initialTab;
+
+  @override
+  Widget build(BuildContext context) {
+    final account = widget.account;
+    return Scaffold(
+      backgroundColor: AppColors.pageBackground,
+      body: Column(
+        children: [
+          Container(
+            color: Colors.white,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          child: const Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Icon(Icons.arrow_back_ios_new,
+                                size: 18, color: AppColors.navy),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const BecuBadge(size: 22),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            account.displayName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      formatCurrency(account.availableBalance),
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Available Balance',
+                      style: TextStyle(fontSize: 16, color: AppColors.slate),
+                    ),
+                    const SizedBox(height: 20),
+                    const Row(
+                      children: [
+                        Expanded(
+                          child: _ActionButton(
+                            icon: Icons.swap_horiz,
+                            label: 'Transfer Funds',
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: _ActionButton(
+                            icon: Icons.grid_view,
+                            label: 'Deposit Check',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          _TabBar(
+            tabs: _tabs,
+            selectedIndex: _tabIndex,
+            onChanged: (index) => setState(() => _tabIndex = index),
+          ),
+          Expanded(
+            child: switch (_tabIndex) {
+              0 => TransactionsTab(account: account),
+              1 => const ManageCardTab(),
+              _ => DetailsTab(account: account),
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(content: Text('$label is not part of this prototype.')),
+            );
+        },
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.teal, width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        icon: Icon(icon, size: 20, color: AppColors.teal),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.teal,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabBar extends StatelessWidget {
+  const _TabBar({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  final List<String> tabs;
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final (index, label) in tabs.indexed)
+          Expanded(
+            child: InkWell(
+              onTap: () => onChanged(index),
+              child: Container(
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: index == selectedIndex
+                      ? Colors.white
+                      : const Color(0xFFF2F3F5),
+                  border: Border(
+                    top: BorderSide(
+                      color: index == selectedIndex
+                          ? AppColors.becuRed
+                          : Colors.transparent,
+                      width: 3,
+                    ),
+                    bottom: BorderSide(
+                      color: index == selectedIndex
+                          ? Colors.transparent
+                          : AppColors.borderSubtle,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: index == selectedIndex
+                        ? FontWeight.w700
+                        : FontWeight.w400,
+                    color: AppColors.navy,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
