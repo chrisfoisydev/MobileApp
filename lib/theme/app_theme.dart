@@ -17,8 +17,19 @@ abstract final class AppColors {
   static const browserBlue = Color(0xFF2E7CF6);
 }
 
+abstract final class AppTextStyles {
+  /// Section labels above card groups ("Pending (3)", "Account Details"...).
+  static const sectionLabel = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w700,
+    color: AppColors.ink,
+  );
+}
+
 abstract final class AppTheme {
-  static ThemeData get light {
+  /// [useGoogleFonts] exists for tests, which can't fetch Public Sans at
+  /// runtime; everything else about the theme stays identical.
+  static ThemeData light({bool useGoogleFonts = true}) {
     final base = ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: Colors.white,
@@ -27,12 +38,18 @@ abstract final class AppTheme {
         primary: AppColors.teal,
       ),
     );
+    final textTheme =
+        useGoogleFonts ? GoogleFonts.publicSansTextTheme(base.textTheme) : base.textTheme;
     return base.copyWith(
-      textTheme: GoogleFonts.publicSansTextTheme(base.textTheme).apply(
+      textTheme: textTheme.apply(
         bodyColor: AppColors.navy,
         displayColor: AppColors.navy,
       ),
       dividerColor: AppColors.borderSubtle,
+      // Figma CTAs are flat; suppress the Material elevation shadow.
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(elevation: 0),
+      ),
     );
   }
 }

@@ -19,6 +19,7 @@ import 'package:mobile_app/screens/account_summary_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
 import 'package:mobile_app/screens/transaction_detail_screen.dart';
 import 'package:mobile_app/screens/welcome_screen.dart';
+import 'package:mobile_app/theme/app_theme.dart';
 
 const _enabled = bool.fromEnvironment('screenshots');
 
@@ -68,6 +69,7 @@ void main() {
 
       await tester.pumpWidget(MaterialApp(
         debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(useGoogleFonts: false),
         home: entry.value,
       ));
       // Advance past the entrance/cascade animations with fixed pumps;

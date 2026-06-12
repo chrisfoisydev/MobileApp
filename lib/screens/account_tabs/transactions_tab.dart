@@ -23,16 +23,13 @@ class TransactionsTab extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           'Pending (${pendingTransactions.length})',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          style: AppTextStyles.sectionLabel,
         ),
         const SizedBox(height: 12),
         for (final tx in pendingTransactions)
           _TransactionTile(transaction: tx, account: account),
         const SizedBox(height: 8),
-        const Text(
-          'Completed',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        const Text('Completed', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 12),
         for (final group in completedGroups) ...[
           Container(

@@ -186,7 +186,7 @@ class _TabBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: index == selectedIndex
                       ? Colors.white
-                      : const Color(0xFFF2F3F5),
+                      : AppColors.pageBackground,
                   border: Border(
                     top: BorderSide(
                       color: index == selectedIndex

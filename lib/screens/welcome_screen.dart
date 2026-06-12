@@ -114,9 +114,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         'Welcome',
                         style: TextStyle(
                           color: AppColors.navy,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          height: 36 / 28,
                         ),
                       ),
                     ),
@@ -144,7 +144,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.becuRed,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           child: const Text(
@@ -174,7 +174,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             side: const BorderSide(
                                 color: AppColors.teal, width: 1.5),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           icon: const Text(

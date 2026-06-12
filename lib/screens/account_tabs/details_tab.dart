@@ -35,10 +35,7 @@ class _DetailsTabState extends State<DetailsTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        const Text(
-          'Account Details',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        const Text('Account Details', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 8),
         SurfaceCard(
           padding: EdgeInsets.zero,
@@ -87,10 +84,7 @@ class _DetailsTabState extends State<DetailsTab> {
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
-          'Balance Info',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        const Text('Balance Info', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 8),
         SurfaceCard(
           padding: EdgeInsets.zero,

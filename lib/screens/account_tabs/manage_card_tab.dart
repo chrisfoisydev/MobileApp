@@ -22,10 +22,7 @@ class _ManageCardTabState extends State<ManageCardTab> {
       children: [
         const _DebitCardArt(),
         const SizedBox(height: 24),
-        const Text(
-          'Manage Cards',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        const Text('Manage Cards', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 8),
         SurfaceCard(
           padding: EdgeInsets.zero,

@@ -13,7 +13,7 @@ class BecuPrototypeApp extends StatelessWidget {
     return MaterialApp(
       title: 'BECU Prototype',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: AppTheme.light(),
       home: const WelcomeScreen(),
     );
   }
