@@ -5,6 +5,7 @@ import '../data/mock_data.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/becu_logo.dart';
+import '../widgets/cascade_in.dart';
 import '../widgets/surface_card.dart';
 import 'account_detail_screen.dart';
 
@@ -45,55 +46,85 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
               children: [
-                _buildQuickActions(),
+                CascadeIn(
+                  key: const ValueKey('quick-actions'),
+                  index: 0,
+                  child: _buildQuickActions(),
+                ),
                 const SizedBox(height: 24),
-                _SectionHeader(
-                  title: 'Checking & Savings (${checkingAndSavings.length})',
-                  expanded: _checkingExpanded,
-                  onToggle: () => setState(() {
-                    _checkingExpanded = !_checkingExpanded;
-                  }),
+                CascadeIn(
+                  key: const ValueKey('checking-header'),
+                  index: 1,
+                  child: _SectionHeader(
+                    title:
+                        'Checking & Savings (${checkingAndSavings.length})',
+                    expanded: _checkingExpanded,
+                    onToggle: () => setState(() {
+                      _checkingExpanded = !_checkingExpanded;
+                    }),
+                  ),
                 ),
                 if (_checkingExpanded)
-                  for (final account in checkingAndSavings)
-                    SurfaceCard(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      onTap: () => _openAccount(account),
-                      child: Row(
-                        children: [
-                          const BecuBadge(),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              account.displayName,
-                              style: const TextStyle(fontSize: 15),
+                  for (final (i, account) in checkingAndSavings.indexed)
+                    CascadeIn(
+                      key: ValueKey('cs-${account.last4}'),
+                      index: 2 + i,
+                      child: SurfaceCard(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        onTap: () => _openAccount(account),
+                        child: Row(
+                          children: [
+                            const BecuBadge(),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                account.displayName,
+                                style: const TextStyle(fontSize: 15),
+                              ),
                             ),
-                          ),
-                          Text(
-                            formatCurrency(account.availableBalance),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                            Text(
+                              formatCurrency(account.availableBalance),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                 const SizedBox(height: 12),
-                _SectionHeader(title: 'Credit Cards (${creditCards.length})'),
-                for (final account in creditCards)
-                  _LabeledBalanceCard(
-                    account: account,
-                    onTap: () => _openAccount(account),
+                CascadeIn(
+                  key: const ValueKey('credit-header'),
+                  index: 5,
+                  child: _SectionHeader(
+                      title: 'Credit Cards (${creditCards.length})'),
+                ),
+                for (final (i, account) in creditCards.indexed)
+                  CascadeIn(
+                    key: ValueKey('cc-${account.last4}'),
+                    index: 6 + i,
+                    child: _LabeledBalanceCard(
+                      account: account,
+                      onTap: () => _openAccount(account),
+                    ),
                   ),
                 const SizedBox(height: 12),
-                _SectionHeader(title: 'Loans (${loans.length})'),
-                for (final account in loans)
-                  _LabeledBalanceCard(
-                    account: account,
-                    onTap: () => _openAccount(account),
+                CascadeIn(
+                  key: const ValueKey('loans-header'),
+                  index: 7 + creditCards.length,
+                  child: _SectionHeader(title: 'Loans (${loans.length})'),
+                ),
+                for (final (i, account) in loans.indexed)
+                  CascadeIn(
+                    key: ValueKey('loan-${account.last4}'),
+                    index: 8 + creditCards.length + i,
+                    child: _LabeledBalanceCard(
+                      account: account,
+                      onTap: () => _openAccount(account),
+                    ),
                   ),
               ],
             ),

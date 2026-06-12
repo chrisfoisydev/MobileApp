@@ -12,10 +12,14 @@ void main() {
   // google_fonts runtime fetching.
   testWidgets('welcome screen navigates to sign in', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
+    // Fixed pumps instead of pumpAndSettle: the welcome backdrop loops a
+    // parallax animation and never settles.
+    await tester.pump(const Duration(milliseconds: 1200));
     expect(find.text('Welcome'), findsOneWidget);
 
     await tester.tap(find.text('Log In'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     expect(find.text('Member Sign In'), findsOneWidget);
   });
 
@@ -29,6 +33,8 @@ void main() {
 
   testWidgets('account summary opens the account view tabs', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));
+    // Let the cascade-in animation finish so the cards are tappable.
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Joint Checking ...4567'));
     await tester.pumpAndSettle();
     expect(find.text('Available Balance'), findsOneWidget);

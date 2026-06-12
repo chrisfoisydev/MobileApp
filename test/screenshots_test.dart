@@ -70,7 +70,10 @@ void main() {
         debugShowCheckedModeBanner: false,
         home: entry.value,
       ));
-      await tester.pumpAndSettle();
+      // Advance past the entrance/cascade animations with fixed pumps;
+      // the welcome backdrop loops forever, so pumpAndSettle would hang.
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
       await expectLater(
         find.byType(MaterialApp),
         matchesGoldenFile('../docs/screenshots/${entry.key}.png'),
