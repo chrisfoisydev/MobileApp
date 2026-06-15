@@ -17,7 +17,7 @@ OUT = ROOT / "docs" / "prototype.html"
 SHOTS = [
     "welcome", "sign_in", "account_summary", "account_transactions",
     "account_manage_card", "account_details", "credit_card",
-    "transaction_details",
+    "move_money", "transfer", "transaction_details",
 ]
 
 TITLES = {
@@ -28,6 +28,8 @@ TITLES = {
     "account_manage_card": "Manage Card",
     "account_details": "Account Details",
     "credit_card": "Credit Card",
+    "move_money": "Move Money",
+    "transfer": "Transfer",
     "transaction_details": "Transaction Details",
 }
 
@@ -48,11 +50,13 @@ HOTSPOTS = {
         (4, 55.8, 92, 5.8, "account_summary"),
     ],
     "account_summary": [
+        (1, 25.5, 24, 10, "transfer"),           # Transfer quick action
         (4, 37.3, 92, 5.8, "account_transactions"),
         (4, 44.6, 92, 5.7, "account_transactions"),
         (4, 52.0, 92, 5.7, "account_transactions"),
         (4, 64.4, 92, 12.5, "credit_card"),
         (4, 84.3, 92, 8.0, "account_transactions"),
+        (20, 93.5, 20, 6.5, "move_money"),        # bottom nav: MOVE MONEY
     ],
     "account_transactions": [BACK] + TABS + [
         (4, 43.9, 92, 9.8, "transaction_details"),
@@ -60,6 +64,11 @@ HOTSPOTS = {
     "account_manage_card": [BACK] + TABS,
     "account_details": [BACK] + TABS,
     "credit_card": [(2, 0.5, 14, 4, "account_summary")],
+    "move_money": [
+        (4, 41, 92, 11, "transfer"),              # Transfer Between Accounts
+        (0, 93.5, 20, 6.5, "account_summary"),    # bottom nav: ACCOUNTS
+    ],
+    "transfer": [(84, 5, 14, 5, "account_summary")],  # X close
     "transaction_details": [(2, 0.5, 14, 4, "account_transactions")],
 }
 

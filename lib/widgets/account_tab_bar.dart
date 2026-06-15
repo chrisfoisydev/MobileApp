@@ -49,13 +49,15 @@ class AccountTabBar extends StatelessWidget {
                 ),
                 child: AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 220),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: index == selectedIndex
-                        ? FontWeight.w700
-                        : FontWeight.w400,
-                    color: AppColors.navy,
-                  ),
+                  // Inherit the themed font family, only overriding size /
+                  // weight / color.
+                  style: DefaultTextStyle.of(context).style.copyWith(
+                        fontSize: 14,
+                        fontWeight: index == selectedIndex
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: AppColors.navy,
+                      ),
                   child: Text(label),
                 ),
               ),

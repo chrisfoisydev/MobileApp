@@ -85,4 +85,35 @@ void main() {
     expect(find.text('Transaction description'), findsOneWidget);
     expect(find.text('6789012345'), findsOneWidget);
   });
+
+  testWidgets('Move Money nav and Transfer quick action navigate',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));
+    await tester.pumpAndSettle();
+
+    // Bottom nav -> Move Money hub.
+    await tester.tap(find.text('MOVE MONEY'));
+    await tester.pumpAndSettle();
+    expect(find.text('Make a Payment'), findsOneWidget);
+    expect(find.text('Transfer Between Accounts'), findsOneWidget);
+
+    // From Move Money, the transfer tile opens the transfer flow.
+    await tester.tap(find.text('Transfer Between Accounts'));
+    await tester.pumpAndSettle();
+    expect(find.text('Where is the money going?'), findsOneWidget);
+
+    // Close back to Move Money.
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    expect(find.text('Transfer Between Accounts'), findsOneWidget);
+  });
+
+  testWidgets('Transfer quick action on summary opens the transfer flow',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Transfer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Where is the money going?'), findsOneWidget);
+  });
 }

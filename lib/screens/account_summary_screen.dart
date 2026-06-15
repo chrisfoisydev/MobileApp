@@ -4,11 +4,14 @@ import '../data/formatting.dart';
 import '../data/mock_data.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_bottom_nav.dart';
 import '../widgets/becu_logo.dart';
 import '../widgets/cascade_in.dart';
 import '../widgets/surface_card.dart';
 import 'account_detail_screen.dart';
 import 'credit_card_detail_screen.dart';
+import 'move_money_screen.dart';
+import 'transfer_screen.dart';
 
 /// Account summary: greeting header, quick actions, account groups and
 /// the bottom navigation bar.
@@ -38,6 +41,26 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
       ..showSnackBar(
         SnackBar(content: Text('$feature is not part of this prototype.')),
       );
+  }
+
+  void _openMoveMoney() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MoveMoneyScreen()),
+    );
+  }
+
+  void _openTransfer() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const TransferScreen()),
+    );
+  }
+
+  void _onNavSelect(int index, String label) {
+    if (index == 1) {
+      _openMoveMoney();
+    } else if (index != 0) {
+      _showPrototypeNotice(label);
+    }
   }
 
   @override
@@ -134,7 +157,7 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
               ],
             ),
           ),
-          _BottomNavBar(onInactiveTap: _showPrototypeNotice),
+          AppBottomNav(currentIndex: 0, onSelect: _onNavSelect),
         ],
       ),
     );
@@ -200,7 +223,7 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
       children: [
         _QuickAction(
           label: 'Transfer',
-          onTap: () => _showPrototypeNotice('Transfer'),
+          onTap: _openTransfer,
           child: const Icon(Icons.swap_horiz, color: AppColors.teal, size: 28),
         ),
         _QuickAction(
@@ -244,12 +267,12 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Container(
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Container(
             width: 56,
             height: 56,
             alignment: Alignment.center,
@@ -266,13 +289,13 @@ class _QuickAction extends StatelessWidget {
             ),
             child: child,
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: AppColors.support),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: AppColors.support),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -378,67 +401,3 @@ class _LabeledBalanceCard extends StatelessWidget {
   }
 }
 
-class _BottomNavBar extends StatelessWidget {
-  const _BottomNavBar({required this.onInactiveTap});
-
-  final ValueChanged<String> onInactiveTap;
-
-  static const _items = [
-    (Icons.business_center_outlined, 'ACCOUNTS'),
-    (Icons.swap_horiz, 'MOVE MONEY'),
-    (Icons.chat_bubble_outline, 'CONTACT'),
-    (Icons.settings_outlined, 'SERVICES'),
-    (Icons.menu, 'MORE'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.borderSubtle)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            for (final (index, item) in _items.indexed)
-              Expanded(
-                child: InkWell(
-                  onTap: index == 0 ? null : () => onInactiveTap(item.$2),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 3,
-                        color:
-                            index == 0 ? AppColors.teal : Colors.transparent,
-                      ),
-                      const SizedBox(height: 8),
-                      Icon(
-                        item.$1,
-                        size: 24,
-                        color: index == 0 ? AppColors.teal : AppColors.ink,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.$2,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight:
-                              index == 0 ? FontWeight.w700 : FontWeight.w500,
-                          color: index == 0 ? AppColors.teal : AppColors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}

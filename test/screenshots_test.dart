@@ -17,8 +17,10 @@ import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
 import 'package:mobile_app/screens/credit_card_detail_screen.dart';
+import 'package:mobile_app/screens/move_money_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
 import 'package:mobile_app/screens/transaction_detail_screen.dart';
+import 'package:mobile_app/screens/transfer_screen.dart';
 import 'package:mobile_app/screens/welcome_screen.dart';
 import 'package:mobile_app/theme/app_theme.dart';
 import 'package:mobile_app/widgets/status_bar.dart';
@@ -61,6 +63,8 @@ void main() {
       account: visaCreditCard,
       initialTab: 1,
     ),
+    'move_money': const MoveMoneyScreen(),
+    'transfer': const TransferScreen(),
     'transaction_details': TransactionDetailScreen(
       transaction: pendingTransactions.first,
       account: jointChecking,
