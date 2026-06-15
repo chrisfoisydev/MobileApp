@@ -29,8 +29,8 @@ class AccountTabBar extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: index == selectedIndex
-                      ? Colors.white
-                      : AppColors.pageBackground,
+                      ? AppColors.pageBackground
+                      : Colors.white,
                   border: Border(
                     top: BorderSide(
                       color: index == selectedIndex

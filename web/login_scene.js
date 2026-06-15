@@ -92,13 +92,15 @@
 
     var scene = new THREE.Scene();
     var FOG = 0xe7f1f5;
-    // Light haze only in the far distance, so the city and mountains stay
-    // crisp (fog starts far out and fully sets in only well beyond them).
-    scene.fog = new THREE.Fog(FOG, 45, 170);
+    // Very light haze far in the distance only, so Seattle and the
+    // mountains read clearly.
+    scene.fog = new THREE.Fog(FOG, 80, 300);
 
-    var camera = new THREE.PerspectiveCamera(48, width / height, 0.1, 200);
-    camera.position.set(0, 3.2, 15);
-    camera.lookAt(0, 4.2, -40);
+    var camera = new THREE.PerspectiveCamera(48, width / height, 0.1, 320);
+    camera.position.set(0, 3.6, 15);
+    // Aim a little higher so the skyline and Mount Rainier fill more of
+    // the view.
+    camera.lookAt(0, 8, -45);
 
     var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -114,23 +116,23 @@
     var far = new THREE.Group();
     scene.add(far);
 
-    // Mount Rainier, hazy blue with a snow cap, off to the right.
+    // Mount Rainier — a large snow-capped peak towering behind downtown.
     var rainier = new THREE.Group();
-    var base = new THREE.Mesh(new THREE.ConeGeometry(20, 13, 28),
-      mat(0xa9c3d0, { rough: 1, flat: true }));
-    base.position.y = 6.5;
+    var base = new THREE.Mesh(new THREE.ConeGeometry(30, 30, 32),
+      mat(0xa7c1d0, { rough: 1, flat: true }));
+    base.position.y = 15;
     rainier.add(base);
-    var snow = new THREE.Mesh(new THREE.ConeGeometry(8.2, 5.3, 28),
+    var snow = new THREE.Mesh(new THREE.ConeGeometry(11, 11, 32),
       mat(0xfbfdff, { rough: 1, flat: true }));
-    snow.position.y = 14.2;
+    snow.position.y = 24.5;
     rainier.add(snow);
-    rainier.position.set(20, 0, -72);
+    rainier.position.set(9, 0, -86);
     far.add(rainier);
 
     // A second softer peak (the Olympics) low on the left.
-    var peak = new THREE.Mesh(new THREE.ConeGeometry(16, 7, 20),
-      mat(0xbcd0da, { rough: 1, flat: true, opacity: 0.9 }));
-    peak.position.set(-26, 3.5, -76);
+    var peak = new THREE.Mesh(new THREE.ConeGeometry(18, 10, 24),
+      mat(0xbcd0da, { rough: 1, flat: true, opacity: 0.92 }));
+    peak.position.set(-17, 5, -90);
     far.add(peak);
 
     // Downtown skyline: a cluster of towers at the end of the water.
@@ -268,14 +270,14 @@
       clouds.position.x = Math.sin(t * 0.04) * 6;
 
       // Gentle traveling bob on the camera.
-      camera.position.y = 3.2 + Math.sin(t * 0.8) * 0.12;
+      camera.position.y = 3.6 + Math.sin(t * 0.8) * 0.12;
 
       renderer.render(scene, camera);
     });
 
     // --- Entrance: the city emerges from the mist as we glide in ---
     var tl = gsap.timeline();
-    tl.from(scene.fog, { far: 70, duration: 2.6, ease: 'power2.out' }, 0);
+    tl.from(scene.fog, { far: 120, duration: 2.6, ease: 'power2.out' }, 0);
     tl.from(camera.position, { y: 9, z: 24, duration: 2.8, ease: 'power3.out' }, 0);
     tl.from(far.position, { y: -4, duration: 2.6, ease: 'power2.out' }, 0);
     needle.scale.set(0.001, 0.001, 0.001);
