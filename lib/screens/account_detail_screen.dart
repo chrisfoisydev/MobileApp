@@ -5,6 +5,7 @@ import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/account_tab_bar.dart';
 import '../widgets/becu_logo.dart';
+import '../widgets/tab_content_switcher.dart';
 import 'account_tabs/details_tab.dart';
 import 'account_tabs/manage_card_tab.dart';
 import 'account_tabs/transactions_tab.dart';
@@ -109,11 +110,14 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
             onChanged: (index) => setState(() => _tabIndex = index),
           ),
           Expanded(
-            child: switch (_tabIndex) {
-              0 => TransactionsTab(account: account),
-              1 => const ManageCardTab(),
-              _ => DetailsTab(account: account),
-            },
+            child: TabContentSwitcher(
+              index: _tabIndex,
+              child: switch (_tabIndex) {
+                0 => TransactionsTab(account: account),
+                1 => const ManageCardTab(),
+                _ => DetailsTab(account: account),
+              },
+            ),
           ),
         ],
       ),

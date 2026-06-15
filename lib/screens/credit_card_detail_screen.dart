@@ -5,6 +5,7 @@ import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/account_tab_bar.dart';
 import '../widgets/becu_logo.dart';
+import '../widgets/tab_content_switcher.dart';
 import 'account_tabs/credit_details_tab.dart';
 import 'account_tabs/transactions_tab.dart';
 
@@ -129,9 +130,12 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
             onChanged: (index) => setState(() => _tabIndex = index),
           ),
           Expanded(
-            child: _tabIndex == 0
-                ? TransactionsTab(account: account)
-                : CreditDetailsTab(account: account),
+            child: TabContentSwitcher(
+              index: _tabIndex,
+              child: _tabIndex == 0
+                  ? TransactionsTab(account: account)
+                  : CreditDetailsTab(account: account),
+            ),
           ),
         ],
       ),

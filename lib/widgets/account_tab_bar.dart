@@ -24,7 +24,9 @@ class AccountTabBar extends StatelessWidget {
           Expanded(
             child: InkWell(
               onTap: () => onChanged(index),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
                 height: 48,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
@@ -45,8 +47,8 @@ class AccountTabBar extends StatelessWidget {
                     ),
                   ),
                 ),
-                child: Text(
-                  label,
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 220),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: index == selectedIndex
@@ -54,6 +56,7 @@ class AccountTabBar extends StatelessWidget {
                         : FontWeight.w400,
                     color: AppColors.navy,
                   ),
+                  child: Text(label),
                 ),
               ),
             ),
