@@ -92,7 +92,9 @@
 
     var scene = new THREE.Scene();
     var FOG = 0xe7f1f5;
-    scene.fog = new THREE.Fog(FOG, 16, 78);
+    // Light haze only in the far distance, so the city and mountains stay
+    // crisp (fog starts far out and fully sets in only well beyond them).
+    scene.fog = new THREE.Fog(FOG, 45, 170);
 
     var camera = new THREE.PerspectiveCamera(48, width / height, 0.1, 200);
     camera.position.set(0, 3.2, 15);
@@ -273,7 +275,7 @@
 
     // --- Entrance: the city emerges from the mist as we glide in ---
     var tl = gsap.timeline();
-    tl.from(scene.fog, { far: 24, duration: 2.6, ease: 'power2.out' }, 0);
+    tl.from(scene.fog, { far: 70, duration: 2.6, ease: 'power2.out' }, 0);
     tl.from(camera.position, { y: 9, z: 24, duration: 2.8, ease: 'power3.out' }, 0);
     tl.from(far.position, { y: -4, duration: 2.6, ease: 'power2.out' }, 0);
     needle.scale.set(0.001, 0.001, 0.001);
