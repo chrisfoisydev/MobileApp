@@ -59,137 +59,139 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                const LoginScene(),
-                SafeArea(
-                  bottom: false,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 306),
-                        child: FadeTransition(
-                          opacity: _entrance,
-                          child: const _NcuaNotice(),
-                        ),
-                      ),
-                    ),
+          // Full-height 3D Seattle backdrop behind everything.
+          const LoginScene(),
+          SafeArea(
+            bottom: false,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 306),
+                  child: FadeTransition(
+                    opacity: _entrance,
+                    child: const _NcuaNotice(),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-          Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x1A0D141C),
-                  blurRadius: 24,
-                  offset: Offset(0, -8),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _enter(0, _FloatingLogo(float: _float)),
-                    const SizedBox(height: 20),
-                    _enter(
-                      1,
-                      const Text(
-                        'Welcome',
-                        style: TextStyle(
-                          color: AppColors.navy,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          height: 36 / 28,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _enter(
-                      2,
-                      const Text(
-                        'To your new destination online banking solution.',
-                        style:
-                            TextStyle(color: AppColors.slate, fontSize: 16),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _enter(
-                      3,
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SignInScreen(),
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.becuRed,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
-                            'Log In',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _enter(
-                      4,
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: OutlinedButton.icon(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const AccountSummaryScreen(),
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                                color: AppColors.teal, width: 1.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          icon: const Text(
-                            'Log in with Biometrics',
-                            style: TextStyle(
-                              color: AppColors.teal,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          label: const _FaceIdIcon(),
-                        ),
-                      ),
-                    ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              // Scrim fades from the scene into solid white behind the
+              // content so the backdrop reads full-height yet stays legible.
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0),
+                    Colors.white.withValues(alpha: 0.8),
+                    Colors.white.withValues(alpha: 0.97),
+                    Colors.white,
                   ],
+                  stops: const [0.0, 0.28, 0.5, 1.0],
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 56, 24, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _enter(0, _FloatingLogo(float: _float)),
+                      const SizedBox(height: 20),
+                      _enter(
+                        1,
+                        const Text(
+                          'Welcome',
+                          style: TextStyle(
+                            color: AppColors.navy,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            height: 36 / 28,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _enter(
+                        2,
+                        const Text(
+                          'To your new destination online banking solution.',
+                          style:
+                              TextStyle(color: AppColors.slate, fontSize: 16),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _enter(
+                        3,
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const SignInScreen(),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.becuRed,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'Log In',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _enter(
+                        4,
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AccountSummaryScreen(),
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                  color: AppColors.teal, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: const Text(
+                              'Log in with Biometrics',
+                              style: TextStyle(
+                                color: AppColors.teal,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            label: const _FaceIdIcon(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
