@@ -5,6 +5,7 @@ import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
+import 'package:mobile_app/screens/transfer_screen.dart';
 import 'package:mobile_app/screens/welcome_screen.dart';
 
 void main() {
@@ -113,6 +114,28 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Transfer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Where is the money going?'), findsOneWidget);
+  });
+
+  testWidgets('selecting a To account advances to the From step',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TransferScreen()));
+    await tester.pumpAndSettle();
+
+    // Pick a destination from the To step.
+    await tester.tap(find.text('Student Savings ...6789'));
+    await tester.pumpAndSettle();
+
+    // Now on the From step: title changed, tracker shows the chosen
+    // account under "To", and that account is excluded from the From list.
+    expect(find.text('Where is the money from?'), findsOneWidget);
+    expect(find.text('Student Savings ...6789'), findsOneWidget); // tracker
+    expect(find.text('Joint Checking ...4567'), findsOneWidget);
+    expect(find.text('Student Checking ...8901'), findsOneWidget);
+
+    // Back returns to the To step.
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
     await tester.pumpAndSettle();
     expect(find.text('Where is the money going?'), findsOneWidget);
   });
