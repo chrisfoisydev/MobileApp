@@ -1,9 +1,10 @@
-// Custom bootstrap: the Flutter service worker is intentionally NOT
+// Custom bootstrap. The Flutter service worker is intentionally NOT
 // registered for this prototype, so the freshest build always loads with a
 // single normal refresh (no incognito or cache-clearing needed).
 //
-// Flutter substitutes {{flutter_js}} and {{flutter_build_config}} at build
-// time; this file is used in place of the auto-generated bootstrap.
+// NOTE: the two loader placeholders below are substituted with multi-line
+// code at build time, so they must stay on their own lines and must never
+// appear inside a comment.
 {{flutter_js}}
 {{flutter_build_config}}
 
