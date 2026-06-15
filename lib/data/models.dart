@@ -13,6 +13,7 @@ class Account {
     required this.pendingTotal,
     this.routingNumber = '325081403',
     this.balanceLabel,
+    this.creditInfo,
   });
 
   final String nickname;
@@ -28,6 +29,9 @@ class Account {
   /// e.g. "Current Balance" for credit cards.
   final String? balanceLabel;
 
+  /// Present for credit-card accounts; drives the credit card detail view.
+  final CreditCardInfo? creditInfo;
+
   String get displayName => '$nickname ...$last4';
   String get maskedNumber => '********$last4';
 
@@ -37,6 +41,31 @@ class Account {
         AccountKind.creditCard => 'Credit Card',
         AccountKind.loan => 'Loan',
       };
+}
+
+/// Credit-card-specific payment terms and limits.
+class CreditCardInfo {
+  const CreditCardInfo({
+    required this.lastPayment,
+    required this.amountPastDue,
+    required this.nextPaymentDue,
+    required this.minimumPaymentDue,
+    required this.autopay,
+    required this.interestRate,
+    required this.ytdInterest,
+    required this.availableCredit,
+    required this.creditLimit,
+  });
+
+  final double lastPayment;
+  final double amountPastDue;
+  final String nextPaymentDue;
+  final double minimumPaymentDue;
+  final double autopay;
+  final String interestRate;
+  final double ytdInterest;
+  final double availableCredit;
+  final double creditLimit;
 }
 
 class BankTransaction {

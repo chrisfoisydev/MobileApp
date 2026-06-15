@@ -5,24 +5,28 @@ import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/account_tab_bar.dart';
 import '../widgets/becu_logo.dart';
-import 'account_tabs/details_tab.dart';
-import 'account_tabs/manage_card_tab.dart';
+import 'account_tabs/credit_details_tab.dart';
 import 'account_tabs/transactions_tab.dart';
 
-/// Account view shared by the Transactions, Manage Card and Details
-/// designs: balance header, action buttons and the three-tab switcher.
-class AccountDetailScreen extends StatefulWidget {
-  const AccountDetailScreen({super.key, required this.account, this.initialTab = 0});
+/// Credit card view: current balance, a single "Make A Payment" action and
+/// the Transactions / Details tabs (Details carries payment terms and
+/// credit limits rather than a routing number).
+class CreditCardDetailScreen extends StatefulWidget {
+  const CreditCardDetailScreen({
+    super.key,
+    required this.account,
+    this.initialTab = 0,
+  });
 
   final Account account;
   final int initialTab;
 
   @override
-  State<AccountDetailScreen> createState() => _AccountDetailScreenState();
+  State<CreditCardDetailScreen> createState() => _CreditCardDetailScreenState();
 }
 
-class _AccountDetailScreenState extends State<AccountDetailScreen> {
-  static const _tabs = ['Transactions', 'Manage Card', 'Details'];
+class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
+  static const _tabs = ['Transactions', 'Details'];
 
   late int _tabIndex = widget.initialTab;
 
@@ -57,7 +61,7 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            account.displayName,
+                            account.officialName,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -76,27 +80,43 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Available Balance',
-                      style: TextStyle(fontSize: 16, color: AppColors.slate),
+                    Text(
+                      account.balanceLabel ?? 'Current Balance',
+                      style: const TextStyle(
+                          fontSize: 16, color: AppColors.slate),
                     ),
                     const SizedBox(height: 20),
-                    const Row(
-                      children: [
-                        Expanded(
-                          child: _ActionButton(
-                            icon: Icons.swap_horiz,
-                            label: 'Transfer Funds',
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Make A Payment is not part of this '
+                                  'prototype.',
+                                ),
+                              ),
+                            );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.teal,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: _ActionButton(
-                            icon: Icons.grid_view,
-                            label: 'Deposit Check',
+                        child: const Text(
+                          'Make A Payment',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -109,56 +129,12 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
             onChanged: (index) => setState(() => _tabIndex = index),
           ),
           Expanded(
-            child: switch (_tabIndex) {
-              0 => TransactionsTab(account: account),
-              1 => const ManageCardTab(),
-              _ => DetailsTab(account: account),
-            },
+            child: _tabIndex == 0
+                ? TransactionsTab(account: account)
+                : CreditDetailsTab(account: account),
           ),
         ],
       ),
     );
   }
 }
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text('$label is not part of this prototype.')),
-            );
-        },
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.teal, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        icon: Icon(icon, size: 20, color: AppColors.teal),
-        label: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: AppColors.teal,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-}
-

@@ -8,6 +8,7 @@ import '../widgets/becu_logo.dart';
 import '../widgets/cascade_in.dart';
 import '../widgets/surface_card.dart';
 import 'account_detail_screen.dart';
+import 'credit_card_detail_screen.dart';
 
 /// Account summary: greeting header, quick actions, account groups and
 /// the bottom navigation bar.
@@ -23,7 +24,11 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
 
   void _openAccount(Account account) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => AccountDetailScreen(account: account)),
+      MaterialPageRoute(
+        builder: (_) => account.kind == AccountKind.creditCard
+            ? CreditCardDetailScreen(account: account)
+            : AccountDetailScreen(account: account),
+      ),
     );
   }
 

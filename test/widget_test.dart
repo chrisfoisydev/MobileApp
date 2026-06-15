@@ -49,6 +49,33 @@ void main() {
     expect(find.text('Account Details'), findsOneWidget);
   });
 
+  testWidgets('tapping a credit card opens the credit card view',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));
+    await tester.pumpAndSettle();
+    final card = find.text('Credit Card ...2903');
+    await tester.scrollUntilVisible(card, 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+
+    // Credit-specific header and CTA, not the checking actions.
+    expect(find.text('Current Balance'), findsOneWidget);
+    expect(find.text('Make A Payment'), findsOneWidget);
+    expect(find.text('Transfer Funds'), findsNothing);
+    expect(find.text('Manage Card'), findsNothing);
+
+    await tester.tap(find.text('Details'));
+    await tester.pumpAndSettle();
+    expect(find.text('Payment Details'), findsOneWidget);
+
+    final advance = find.text('Request Cash Advance');
+    await tester.scrollUntilVisible(advance, 200,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.text('Credit Limit'), findsOneWidget);
+    expect(advance, findsOneWidget);
+  });
+
   testWidgets('transaction tile opens transaction details', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: AccountDetailScreen(account: jointChecking)),

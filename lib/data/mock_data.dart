@@ -34,18 +34,29 @@ const checkingAndSavings = [
   ),
 ];
 
-const creditCards = [
-  Account(
-    nickname: 'Platinum Rewards Credit Card',
-    officialName: 'Platinum Rewards Visa',
-    last4: '9534',
-    kind: AccountKind.creditCard,
-    availableBalance: 23456.78,
-    postedBalance: 23456.78,
-    pendingTotal: 0,
-    balanceLabel: 'Current Balance',
+const visaCreditCard = Account(
+  nickname: 'Credit Card',
+  officialName: 'Visa Credit Card 2903',
+  last4: '2903',
+  kind: AccountKind.creditCard,
+  availableBalance: 1464.37,
+  postedBalance: 1464.37,
+  pendingTotal: 0,
+  balanceLabel: 'Current Balance',
+  creditInfo: CreditCardInfo(
+    lastPayment: 37.02,
+    amountPastDue: 0,
+    nextPaymentDue: '07/22/2026',
+    minimumPaymentDue: 0,
+    autopay: 0,
+    interestRate: '24.40%',
+    ytdInterest: 0,
+    availableCredit: 28535.00,
+    creditLimit: 30000.00,
   ),
-];
+);
+
+const creditCards = [visaCreditCard];
 
 const loans = [
   Account(

@@ -16,7 +16,8 @@ OUT = ROOT / "docs" / "prototype.html"
 
 SHOTS = [
     "welcome", "sign_in", "account_summary", "account_transactions",
-    "account_manage_card", "account_details", "transaction_details",
+    "account_manage_card", "account_details", "credit_card",
+    "transaction_details",
 ]
 
 TITLES = {
@@ -26,6 +27,7 @@ TITLES = {
     "account_transactions": "Transactions",
     "account_manage_card": "Manage Card",
     "account_details": "Account Details",
+    "credit_card": "Credit Card",
     "transaction_details": "Transaction Details",
 }
 
@@ -49,7 +51,7 @@ HOTSPOTS = {
         (4, 37.3, 92, 5.8, "account_transactions"),
         (4, 44.6, 92, 5.7, "account_transactions"),
         (4, 52.0, 92, 5.7, "account_transactions"),
-        (4, 64.4, 92, 12.5, "account_transactions"),
+        (4, 64.4, 92, 12.5, "credit_card"),
         (4, 84.3, 92, 8.0, "account_transactions"),
     ],
     "account_transactions": [BACK] + TABS + [
@@ -57,6 +59,7 @@ HOTSPOTS = {
     ],
     "account_manage_card": [BACK] + TABS,
     "account_details": [BACK] + TABS,
+    "credit_card": [(2, 0.5, 14, 4, "account_summary")],
     "transaction_details": [(2, 0.5, 14, 4, "account_transactions")],
 }
 

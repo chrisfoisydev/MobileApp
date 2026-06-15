@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
+import 'package:mobile_app/screens/credit_card_detail_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
 import 'package:mobile_app/screens/transaction_detail_screen.dart';
 import 'package:mobile_app/screens/welcome_screen.dart';
@@ -55,6 +56,10 @@ void main() {
         AccountDetailScreen(account: jointChecking, initialTab: 1),
     'account_details':
         AccountDetailScreen(account: jointChecking, initialTab: 2),
+    'credit_card': const CreditCardDetailScreen(
+      account: visaCreditCard,
+      initialTab: 1,
+    ),
     'transaction_details': TransactionDetailScreen(
       transaction: pendingTransactions.first,
       account: jointChecking,
