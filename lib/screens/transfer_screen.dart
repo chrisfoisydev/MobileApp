@@ -380,7 +380,7 @@ class _SearchField extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(color: AppColors.teal, width: 1.5),
+          border: Border.all(color: AppColors.fieldBorder),
           borderRadius: BorderRadius.circular(8),
         ),
         child: const Row(
@@ -486,7 +486,7 @@ class _ExternalCard extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          const Icon(Icons.north_east, color: AppColors.teal, size: 20),
+          const Icon(Icons.north_east, color: AppColors.slate, size: 20),
           const SizedBox(width: 12),
           const Text(
             'External ',
