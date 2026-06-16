@@ -8,12 +8,16 @@ class SurfaceCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.margin = EdgeInsets.zero,
     this.onTap,
+    this.elevated = true,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry margin;
   final VoidCallback? onTap;
+
+  /// Whether to draw the subtle drop shadow. Set false for a flat card.
+  final bool elevated;
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +26,15 @@ class SurfaceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow: elevated
+            ? const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,

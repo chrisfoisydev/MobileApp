@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data/formatting.dart';
 import '../data/mock_data.dart';
@@ -47,14 +48,12 @@ class _TransferScreenState extends State<TransferScreen> {
       );
   }
 
-  void _selectTo(Account account) =>
-      setState(() {
+  void _selectTo(Account account) => setState(() {
         _toAccount = account;
         _step = 1;
       });
 
-  void _selectFrom(Account account) =>
-      setState(() {
+  void _selectFrom(Account account) => setState(() {
         _fromAccount = account;
         _step = 2;
       });
@@ -64,6 +63,27 @@ class _TransferScreenState extends State<TransferScreen> {
       });
 
   void _backspace() => setState(() => _amountCents ~/= 10);
+
+  /// Lets a physical keyboard (web/desktop) drive the amount alongside the
+  /// on-screen keypad.
+  KeyEventResult _handleAmountKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final ch = event.character;
+    if (ch != null && ch.length == 1) {
+      final code = ch.codeUnitAt(0);
+      if (code >= 0x30 && code <= 0x39) {
+        _tapDigit(code - 0x30);
+        return KeyEventResult.handled;
+      }
+    }
+    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+      _backspace();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
 
   void _back() {
     if (_step > 0) {
@@ -225,8 +245,8 @@ class _TransferScreenState extends State<TransferScreen> {
                   children: [
                     Text(
                       'Send money to a Person or Organization',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     SizedBox(height: 2),
                     Text(
@@ -244,9 +264,8 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 
   Widget _buildFromList() {
-    final fromAccounts = checkingAndSavings
-        .where((a) => a.last4 != _toAccount?.last4)
-        .toList();
+    final fromAccounts =
+        checkingAndSavings.where((a) => a.last4 != _toAccount?.last4).toList();
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
@@ -269,101 +288,106 @@ class _TransferScreenState extends State<TransferScreen> {
 
   Widget _buildAmountStep() {
     final from = _fromAccount;
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-              const Text(
-                'Available to transfer from account',
-                style: TextStyle(fontSize: 12, color: AppColors.slate),
-              ),
-              const SizedBox(height: 8),
-              if (from != null)
-                SurfaceCard(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      const BecuBadge(),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(from.displayName,
-                            style: const TextStyle(fontSize: 16)),
-                      ),
-                      Text(
-                        formatCurrency(from.availableBalance),
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
-                    ],
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _handleAmountKey,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Available to transfer from account',
+                    style: TextStyle(fontSize: 12, color: AppColors.slate),
                   ),
-                ),
-              const SizedBox(height: 20),
-              const Text(
-                'Enter Amount',
-                style: TextStyle(fontSize: 12, color: AppColors.slate),
-              ),
-              const SizedBox(height: 8),
-              SurfaceCard(
-                padding: const EdgeInsets.symmetric(vertical: 36),
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 8, right: 4),
-                        child: Text('\$',
-                            style: TextStyle(
-                                fontSize: 26, color: AppColors.navy)),
+                  const SizedBox(height: 8),
+                  if (from != null)
+                    SurfaceCard(
+                      elevated: false,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      child: Row(
+                        children: [
+                          const BecuBadge(),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(from.displayName,
+                                style: const TextStyle(fontSize: 16)),
+                          ),
+                          Text(
+                            formatCurrency(from.availableBalance),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
+                        ],
                       ),
-                      Text(
-                        formatCurrency(_amountCents / 100).substring(1),
-                        style: const TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.navy,
+                    ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Enter Amount',
+                    style: TextStyle(fontSize: 12, color: AppColors.slate),
+                  ),
+                  const SizedBox(height: 8),
+                  SurfaceCard(
+                    padding: const EdgeInsets.symmetric(vertical: 36),
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8, right: 4),
+                            child: Text('\$',
+                                style: TextStyle(
+                                    fontSize: 26, color: AppColors.navy)),
+                          ),
+                          Text(
+                            formatCurrency(_amountCents / 100).substring(1),
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _amountCents > 0
+                          ? () => setState(() => _step = 3)
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.teal,
+                        disabledBackgroundColor: AppColors.monthBar,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _amountCents > 0
-                      ? () => setState(() => _step = 3)
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.teal,
-                    disabledBackgroundColor: AppColors.monthBar,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      child: const Text(
+                        'Continue',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                ],
               ),
-              ],
             ),
           ),
-        ),
-        _Keypad(onDigit: _tapDigit, onBackspace: _backspace),
-      ],
+          _Keypad(onDigit: _tapDigit, onBackspace: _backspace),
+        ],
+      ),
     );
   }
 
@@ -441,16 +465,16 @@ class _AccountCard extends StatelessWidget {
           const BecuBadge(),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(account.displayName,
-                style: const TextStyle(fontSize: 16)),
+            child:
+                Text(account.displayName, style: const TextStyle(fontSize: 16)),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 formatCurrency(account.availableBalance),
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w700),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const Text(
                 'Available Balance',
@@ -511,9 +535,8 @@ class _StepTracker extends StatelessWidget {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: i <= activeStep
-                                ? AppColors.teal
-                                : Colors.white,
+                            color:
+                                i <= activeStep ? AppColors.teal : Colors.white,
                             border: Border.all(
                               color: i <= activeStep
                                   ? AppColors.teal
@@ -624,8 +647,8 @@ class _Keypad extends StatelessWidget {
             Row(children: [digit(7), digit(8), digit(9)]),
             Row(
               children: [
-                const _KeypadKey(child: Text('+ * #',
-                    style: TextStyle(fontSize: 20))),
+                const _KeypadKey(
+                    child: Text('+ * #', style: TextStyle(fontSize: 20))),
                 digit(0),
                 _KeypadKey(
                   onTap: onBackspace,
@@ -706,8 +729,8 @@ class _CalendarCard extends StatelessWidget {
             children: [
               const Expanded(
                 child: Text('June 2026',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w700)),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
               ),
               InkWell(
                 onTap: onMonthChange,
@@ -728,8 +751,8 @@ class _CalendarCard extends StatelessWidget {
                   child: Center(
                     child: Text(
                       w,
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.slate),
+                      style:
+                          const TextStyle(fontSize: 11, color: AppColors.slate),
                     ),
                   ),
                 ),
