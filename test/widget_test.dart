@@ -172,9 +172,25 @@ void main() {
     await tester.tap(continueBtn);
     await tester.pumpAndSettle();
 
-    // Date step with the calendar.
+    // Date step with the calendar; pick a day, then continue to review.
     expect(find.textContaining('When do you want to'), findsOneWidget);
     expect(find.text('June 2026'), findsOneWidget);
-    expect(find.text('Set Date'), findsOneWidget);
+    await tester.tap(find.text('14'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Set Date'));
+    await tester.pumpAndSettle();
+
+    // Review step.
+    expect(find.textContaining('confirm everything looks good'), findsOneWidget);
+    expect(find.text('Confirm'), findsOneWidget);
+    expect(
+      find.text('Funds are typically available in 1–2 business days.'),
+      findsOneWidget,
+    );
+
+    // The Amount edit pencil returns to the Amount step.
+    await tester.tap(find.byIcon(Icons.edit_outlined).at(2));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('How much would you like'), findsOneWidget);
   });
 }

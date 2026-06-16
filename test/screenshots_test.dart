@@ -81,6 +81,16 @@ void main() {
       initialToAccount: checkingAndSavings[2],
       initialFromAccount: jointChecking,
       initialAmountCents: 7500,
+      initialSelectedDay: 14,
+      initialNote: 'Adding a little buffer',
+    ),
+    'transfer_review': TransferScreen(
+      initialStep: 4,
+      initialToAccount: checkingAndSavings[2],
+      initialFromAccount: jointChecking,
+      initialAmountCents: 7500,
+      initialSelectedDay: 14,
+      initialNote: 'Adding a little buffer',
     ),
     'transaction_details': TransactionDetailScreen(
       transaction: pendingTransactions.first,

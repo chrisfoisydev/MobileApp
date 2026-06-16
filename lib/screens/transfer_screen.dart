@@ -6,6 +6,7 @@ import '../data/mock_data.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/becu_logo.dart';
+import '../widgets/detail_row.dart';
 import '../widgets/surface_card.dart';
 
 /// Transfer flow with four steps tracked across the top:
@@ -18,7 +19,8 @@ class TransferScreen extends StatefulWidget {
     this.initialToAccount,
     this.initialFromAccount,
     this.initialAmountCents = 0,
-    this.initialSelectedDay = 8,
+    this.initialSelectedDay,
+    this.initialNote = '',
     this.initialKeypadOpen = false,
   });
 
@@ -26,7 +28,8 @@ class TransferScreen extends StatefulWidget {
   final Account? initialToAccount;
   final Account? initialFromAccount;
   final int initialAmountCents;
-  final int initialSelectedDay;
+  final int? initialSelectedDay;
+  final String initialNote;
   final bool initialKeypadOpen;
 
   @override
@@ -38,15 +41,22 @@ class _TransferScreenState extends State<TransferScreen> {
   late Account? _toAccount = widget.initialToAccount;
   late Account? _fromAccount = widget.initialFromAccount;
   late int _amountCents = widget.initialAmountCents;
-  late int _selectedDay = widget.initialSelectedDay;
+  late int? _selectedDay = widget.initialSelectedDay;
   late bool _keypadVisible = widget.initialKeypadOpen;
   final FocusNode _amountFocus = FocusNode();
+  late final TextEditingController _noteController =
+      TextEditingController(text: widget.initialNote);
+
+  /// Fixed "today" marker shown as an open circle on the calendar.
+  static const _todayDay = 8;
+
   bool _becuExpanded = true;
   bool _externalExpanded = true;
 
   @override
   void dispose() {
     _amountFocus.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -108,14 +118,18 @@ class _TransferScreenState extends State<TransferScreen> {
     }
   }
 
-  void _setDate() {
+  void _toReview() => setState(() => _step = 4);
+
+  void _editStep(int step) => setState(() => _step = step);
+
+  void _confirm() {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(
-            'Transfer of ${formatCurrency(_amountCents / 100)} scheduled '
-            'for Jun $_selectedDay, 2026.',
+            'Transfer of ${formatCurrency(_amountCents / 100)} to '
+            '${_toAccount?.nickname ?? 'your account'} confirmed.',
           ),
         ),
       );
@@ -127,7 +141,8 @@ class _TransferScreenState extends State<TransferScreen> {
         1 => 'Where is the money from?',
         2 => 'How much would you like to transfer to '
             '${_toAccount?.nickname ?? 'your account'}?',
-        _ => 'Almost done, John!\nWhen do you want to transfer?',
+        3 => 'Almost done, John!\nWhen do you want to transfer?',
+        _ => "Let's confirm everything looks good to you.",
       };
 
   @override
@@ -184,12 +199,14 @@ class _TransferScreenState extends State<TransferScreen> {
                   ],
                   const SizedBox(height: 20),
                   _StepTracker(
-                    activeStep: _step,
+                    activeStep: _step > 3 ? 3 : _step,
                     subLabels: [
                       _toAccount?.displayName,
                       _fromAccount?.displayName,
                       _step >= 3 ? formatCurrency(_amountCents / 100) : null,
-                      null,
+                      _step >= 4 && _selectedDay != null
+                          ? 'June $_selectedDay, 2026'
+                          : null,
                     ],
                   ),
                   if (_step == 0) ...[
@@ -207,7 +224,8 @@ class _TransferScreenState extends State<TransferScreen> {
                 0 => _buildToList(),
                 1 => _buildFromList(),
                 2 => _buildAmountStep(),
-                _ => _buildDateStep(),
+                3 => _buildDateStep(),
+                _ => _buildReviewStep(),
               },
             ),
           ),
@@ -413,6 +431,7 @@ class _TransferScreenState extends State<TransferScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
         _CalendarCard(
+          todayDay: _todayDay,
           selectedDay: _selectedDay,
           onSelect: (day) => setState(() => _selectedDay = day),
           onMonthChange: () => _notice('Changing the month'),
@@ -422,6 +441,7 @@ class _TransferScreenState extends State<TransferScreen> {
             style: TextStyle(fontSize: 12, color: AppColors.slate)),
         const SizedBox(height: 8),
         TextField(
+          controller: _noteController,
           decoration: InputDecoration(
             hintText: 'What is this for?',
             hintStyle: const TextStyle(color: AppColors.slate),
@@ -444,9 +464,10 @@ class _TransferScreenState extends State<TransferScreen> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: _setDate,
+            onPressed: _selectedDay != null ? _toReview : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.teal,
+              disabledBackgroundColor: AppColors.monthBar,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -457,6 +478,96 @@ class _TransferScreenState extends State<TransferScreen> {
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReviewStep() {
+    Widget editIcon(int step) => InkWell(
+          onTap: () => _editStep(step),
+          customBorder: const CircleBorder(),
+          child: const Padding(
+            padding: EdgeInsets.all(4),
+            child: Icon(Icons.edit_outlined, size: 20, color: AppColors.teal),
+          ),
+        );
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            children: [
+              SurfaceCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    DetailRow(
+                      label: 'To',
+                      value: _toAccount?.displayName ?? '',
+                      trailing: editIcon(0),
+                    ),
+                    DetailRow(
+                      label: 'From',
+                      value: _fromAccount?.displayName ?? '',
+                      trailing: editIcon(1),
+                    ),
+                    DetailRow(
+                      label: 'Amount',
+                      value: formatCurrency(_amountCents / 100),
+                      trailing: editIcon(2),
+                    ),
+                    DetailRow(
+                      label: 'Date',
+                      value: 'June ${_selectedDay ?? _todayDay}, 2026',
+                      trailing: editIcon(3),
+                    ),
+                    DetailRow(
+                      label: 'Note',
+                      value: _noteController.text.isEmpty
+                          ? 'None'
+                          : _noteController.text,
+                      trailing: editIcon(3),
+                      showDivider: false,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Funds are typically available in 1–2 business days.',
+                style: TextStyle(fontSize: 13, color: AppColors.slate),
+              ),
+            ],
+          ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _confirm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Confirm',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ),
@@ -709,12 +820,14 @@ class _KeypadKey extends StatelessWidget {
 
 class _CalendarCard extends StatelessWidget {
   const _CalendarCard({
+    required this.todayDay,
     required this.selectedDay,
     required this.onSelect,
     required this.onMonthChange,
   });
 
-  final int selectedDay;
+  final int todayDay;
+  final int? selectedDay;
   final ValueChanged<int> onSelect;
   final VoidCallback onMonthChange;
 
@@ -785,6 +898,8 @@ class _CalendarCard extends StatelessWidget {
                       cell: cells[row * 7 + col],
                       selected: cells[row * 7 + col].$2 &&
                           cells[row * 7 + col].$1 == selectedDay,
+                      isToday: cells[row * 7 + col].$2 &&
+                          cells[row * 7 + col].$1 == todayDay,
                       onSelect: onSelect,
                     ),
                   ),
@@ -800,38 +915,50 @@ class _DayCell extends StatelessWidget {
   const _DayCell({
     required this.cell,
     required this.selected,
+    required this.isToday,
     required this.onSelect,
   });
 
   final (int, bool) cell;
   final bool selected;
+  final bool isToday;
   final ValueChanged<int> onSelect;
 
   @override
   Widget build(BuildContext context) {
     final day = cell.$1;
     final inMonth = cell.$2;
+    // Today is a fixed marker (open circle) and can't be re-selected; any
+    // other in-month day can be chosen and renders as a filled square.
+    final BoxDecoration? decoration = selected
+        ? BoxDecoration(
+            color: AppColors.teal,
+            borderRadius: BorderRadius.circular(10),
+          )
+        : isToday
+            ? BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.teal, width: 1.5),
+              )
+            : null;
     return AspectRatio(
       aspectRatio: 1,
       child: InkWell(
-        onTap: inMonth ? () => onSelect(day) : null,
+        onTap: inMonth && !isToday ? () => onSelect(day) : null,
         customBorder: const CircleBorder(),
         child: Center(
           child: Container(
             width: 38,
             height: 38,
             alignment: Alignment.center,
-            decoration: selected
-                ? BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.teal, width: 1.5),
-                  )
-                : null,
+            decoration: decoration,
             child: Text(
               '$day',
               style: TextStyle(
                 fontSize: 16,
-                color: inMonth ? AppColors.navy : const Color(0xFFC4CDD5),
+                color: selected
+                    ? Colors.white
+                    : (inMonth ? AppColors.navy : const Color(0xFFC4CDD5)),
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
               ),
             ),
