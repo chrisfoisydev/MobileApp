@@ -59,6 +59,8 @@ void main() {
         AccountDetailScreen(account: jointChecking, initialTab: 1),
     'account_details':
         AccountDetailScreen(account: jointChecking, initialTab: 2),
+    'savings_buckets':
+        AccountDetailScreen(account: checkingAndSavings[2], initialTab: 1),
     'credit_card': const CreditCardDetailScreen(
       account: visaCreditCard,
       initialTab: 1,

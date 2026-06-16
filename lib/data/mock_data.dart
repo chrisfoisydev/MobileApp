@@ -24,13 +24,32 @@ const checkingAndSavings = [
     pendingTotal: 0,
   ),
   Account(
-    nickname: 'Student Savings',
+    nickname: 'Joint Savings',
     officialName: 'Savings Account Mbr Share 01',
     last4: '6789',
     kind: AccountKind.savings,
     availableBalance: 34145.89,
     postedBalance: 34145.89,
     pendingTotal: 0,
+    buckets: [
+      SavingsBucket(
+        name: 'Down Payment',
+        saved: 10400,
+        goal: 50000,
+        daysLeft: '104 days left',
+        autoTransfer: true,
+        monthlyContribution: 1200,
+        featured: true,
+      ),
+      SavingsBucket(
+        name: 'New Car Fund',
+        saved: 10400,
+        goal: 25000,
+        autoTransfer: true,
+        monthlyContribution: 1200,
+      ),
+      SavingsBucket(name: 'Emergency Fund', saved: 8000),
+    ],
   ),
 ];
 

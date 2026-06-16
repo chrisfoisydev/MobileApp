@@ -8,10 +8,12 @@ import '../widgets/becu_logo.dart';
 import '../widgets/tab_content_switcher.dart';
 import 'account_tabs/details_tab.dart';
 import 'account_tabs/manage_card_tab.dart';
+import 'account_tabs/savings_buckets_tab.dart';
 import 'account_tabs/transactions_tab.dart';
 
-/// Account view shared by the Transactions, Manage Card and Details
-/// designs: balance header, action buttons and the three-tab switcher.
+/// Account view: balance header, action buttons and a three-tab switcher.
+/// The middle tab is "Savings Buckets" for savings accounts and
+/// "Manage Card" otherwise.
 class AccountDetailScreen extends StatefulWidget {
   const AccountDetailScreen({super.key, required this.account, this.initialTab = 0});
 
@@ -23,7 +25,12 @@ class AccountDetailScreen extends StatefulWidget {
 }
 
 class _AccountDetailScreenState extends State<AccountDetailScreen> {
-  static const _tabs = ['Transactions', 'Manage Card', 'Details'];
+  late final bool _isSavings = widget.account.kind == AccountKind.savings;
+  late final List<String> _tabs = [
+    'Transactions',
+    _isSavings ? 'Savings Buckets (${widget.account.buckets.length})' : 'Manage Card',
+    'Details',
+  ];
 
   late int _tabIndex = widget.initialTab;
 
@@ -114,7 +121,9 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
               index: _tabIndex,
               child: switch (_tabIndex) {
                 0 => TransactionsTab(account: account),
-                1 => const ManageCardTab(),
+                1 => _isSavings
+                    ? SavingsBucketsTab(account: account)
+                    : const ManageCardTab(),
                 _ => DetailsTab(account: account),
               },
             ),

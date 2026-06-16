@@ -14,6 +14,7 @@ class Account {
     this.routingNumber = '325081403',
     this.balanceLabel,
     this.creditInfo,
+    this.buckets = const [],
   });
 
   final String nickname;
@@ -32,6 +33,9 @@ class Account {
   /// Present for credit-card accounts; drives the credit card detail view.
   final CreditCardInfo? creditInfo;
 
+  /// Savings goals/jars shown on the Savings Buckets tab.
+  final List<SavingsBucket> buckets;
+
   String get displayName => '$nickname ...$last4';
   String get maskedNumber => '********$last4';
 
@@ -41,6 +45,36 @@ class Account {
         AccountKind.creditCard => 'Credit Card',
         AccountKind.loan => 'Loan',
       };
+}
+
+/// A savings bucket/jar. A non-null [goal] makes it a goal (purple); a null
+/// [goal] is a "just saving up" jar (blue).
+class SavingsBucket {
+  const SavingsBucket({
+    required this.name,
+    required this.saved,
+    this.goal,
+    this.daysLeft,
+    this.autoTransfer = false,
+    this.monthlyContribution,
+    this.featured = false,
+  });
+
+  final String name;
+  final double saved;
+  final double? goal;
+  final String? daysLeft;
+  final bool autoTransfer;
+  final double? monthlyContribution;
+
+  /// Renders as the large progress card at the top of the list.
+  final bool featured;
+
+  bool get isGoal => goal != null;
+
+  /// Fraction saved toward [goal] (0..1); 0 when there is no goal.
+  double get progress =>
+      goal == null || goal == 0 ? 0 : (saved / goal!).clamp(0, 1);
 }
 
 /// Credit-card-specific payment terms and limits.

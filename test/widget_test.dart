@@ -50,6 +50,25 @@ void main() {
     expect(find.text('Account Details'), findsOneWidget);
   });
 
+  testWidgets('a savings account shows the Savings Buckets tab',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Joint Savings ...6789'));
+    await tester.pumpAndSettle();
+
+    // Savings accounts swap "Manage Card" for "Savings Buckets".
+    expect(find.text('Savings Buckets (3)'), findsOneWidget);
+    expect(find.text('Manage Card'), findsNothing);
+
+    await tester.tap(find.text('Savings Buckets (3)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Down Payment'), findsOneWidget);
+    expect(find.text('New Car Fund'), findsOneWidget);
+    expect(find.text('Emergency Fund'), findsOneWidget);
+    expect(find.text('Add bucket'), findsOneWidget);
+  });
+
   testWidgets('tapping a credit card opens the credit card view',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));
@@ -124,13 +143,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // Pick a destination from the To step.
-    await tester.tap(find.text('Student Savings ...6789'));
+    await tester.tap(find.text('Joint Savings ...6789'));
     await tester.pumpAndSettle();
 
     // Now on the From step: title changed, tracker shows the chosen
     // account under "To", and that account is excluded from the From list.
     expect(find.text('Where is the money from?'), findsOneWidget);
-    expect(find.text('Student Savings ...6789'), findsOneWidget); // tracker
+    expect(find.text('Joint Savings ...6789'), findsOneWidget); // tracker
     expect(find.text('Joint Checking ...4567'), findsOneWidget);
     expect(find.text('Student Checking ...8901'), findsOneWidget);
 
@@ -150,7 +169,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: TransferScreen()));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Student Savings ...6789'));
+    await tester.tap(find.text('Joint Savings ...6789'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Joint Checking ...4567'));
     await tester.pumpAndSettle();
