@@ -139,4 +139,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Where is the money going?'), findsOneWidget);
   });
+
+  testWidgets('transfer flow continues through amount and date',
+      (tester) async {
+    // Use a phone-sized surface so the amount keypad has room.
+    tester.view.physicalSize = const Size(402, 874);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const MaterialApp(home: TransferScreen()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Student Savings ...6789'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Joint Checking ...4567'));
+    await tester.pumpAndSettle();
+
+    // Amount step with keypad.
+    expect(find.textContaining('How much would you like'), findsOneWidget);
+    for (final key in ['7', '5', '0', '0']) {
+      await tester.tap(find.text(key));
+      await tester.pump();
+    }
+    expect(find.text('75.00'), findsOneWidget);
+
+    final continueBtn = find.text('Continue');
+    await tester.ensureVisible(continueBtn);
+    await tester.pumpAndSettle();
+    await tester.tap(continueBtn);
+    await tester.pumpAndSettle();
+
+    // Date step with the calendar.
+    expect(find.textContaining('When do you want to'), findsOneWidget);
+    expect(find.text('June 2026'), findsOneWidget);
+    expect(find.text('Set Date'), findsOneWidget);
+  });
 }

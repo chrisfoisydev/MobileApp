@@ -65,7 +65,22 @@ void main() {
     ),
     'move_money': const MoveMoneyScreen(),
     'transfer': const TransferScreen(),
-    'transfer_from': TransferScreen(initialToAccount: checkingAndSavings[2]),
+    'transfer_from': TransferScreen(
+      initialStep: 1,
+      initialToAccount: checkingAndSavings[2],
+    ),
+    'transfer_amount': TransferScreen(
+      initialStep: 2,
+      initialToAccount: checkingAndSavings[2],
+      initialFromAccount: jointChecking,
+      initialAmountCents: 7500,
+    ),
+    'transfer_date': TransferScreen(
+      initialStep: 3,
+      initialToAccount: checkingAndSavings[2],
+      initialFromAccount: jointChecking,
+      initialAmountCents: 7500,
+    ),
     'transaction_details': TransactionDetailScreen(
       transaction: pendingTransactions.first,
       account: jointChecking,

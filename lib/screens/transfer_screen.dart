@@ -7,24 +7,35 @@ import '../theme/app_theme.dart';
 import '../widgets/becu_logo.dart';
 import '../widgets/surface_card.dart';
 
-/// Transfer flow. Step 1 ("To") picks the destination; selecting a BECU
-/// account advances to step 2 ("From"), which records the destination under
-/// the "To" step of the tracker and lists the remaining accounts to send
-/// from.
+/// Transfer flow with four steps tracked across the top:
+/// To → From → Amount → Date. Each selection is recorded under its step
+/// in the tracker and carried into the next.
 class TransferScreen extends StatefulWidget {
-  const TransferScreen({super.key, this.initialToAccount});
+  const TransferScreen({
+    super.key,
+    this.initialStep = 0,
+    this.initialToAccount,
+    this.initialFromAccount,
+    this.initialAmountCents = 0,
+    this.initialSelectedDay = 8,
+  });
 
-  /// When set, the flow opens on the "From" step with this destination
-  /// already chosen.
+  final int initialStep;
   final Account? initialToAccount;
+  final Account? initialFromAccount;
+  final int initialAmountCents;
+  final int initialSelectedDay;
 
   @override
   State<TransferScreen> createState() => _TransferScreenState();
 }
 
 class _TransferScreenState extends State<TransferScreen> {
-  late int _step = widget.initialToAccount == null ? 0 : 1;
+  late int _step = widget.initialStep;
   late Account? _toAccount = widget.initialToAccount;
+  late Account? _fromAccount = widget.initialFromAccount;
+  late int _amountCents = widget.initialAmountCents;
+  late int _selectedDay = widget.initialSelectedDay;
   bool _becuExpanded = true;
   bool _externalExpanded = true;
 
@@ -36,24 +47,57 @@ class _TransferScreenState extends State<TransferScreen> {
       );
   }
 
-  void _selectTo(Account account) {
-    setState(() {
-      _toAccount = account;
-      _step = 1;
-    });
-  }
+  void _selectTo(Account account) =>
+      setState(() {
+        _toAccount = account;
+        _step = 1;
+      });
+
+  void _selectFrom(Account account) =>
+      setState(() {
+        _fromAccount = account;
+        _step = 2;
+      });
+
+  void _tapDigit(int d) => setState(() {
+        _amountCents = (_amountCents * 10 + d).clamp(0, 99999999);
+      });
+
+  void _backspace() => setState(() => _amountCents ~/= 10);
 
   void _back() {
     if (_step > 0) {
-      setState(() => _step = 0);
+      setState(() => _step -= 1);
     } else {
       Navigator.of(context).maybePop();
     }
   }
 
+  void _setDate() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            'Transfer of ${formatCurrency(_amountCents / 100)} scheduled '
+            'for Jun $_selectedDay, 2026.',
+          ),
+        ),
+      );
+    Navigator.of(context).maybePop();
+  }
+
+  String get _title => switch (_step) {
+        0 => 'Where is the money going?',
+        1 => 'Where is the money from?',
+        2 => 'How much would you like to transfer to '
+            '${_toAccount?.nickname ?? 'your account'}?',
+        _ => 'Almost done, John!\nWhen do you want to transfer?',
+      };
+
   @override
   Widget build(BuildContext context) {
-    final isFrom = _step == 1;
+    final showSubtitle = _step <= 1;
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -67,7 +111,7 @@ class _TransferScreenState extends State<TransferScreen> {
                 children: [
                   Row(
                     children: [
-                      if (isFrom)
+                      if (_step > 0)
                         InkWell(
                           onTap: _back,
                           customBorder: const CircleBorder(),
@@ -89,26 +133,31 @@ class _TransferScreenState extends State<TransferScreen> {
                     ],
                   ),
                   Text(
-                    isFrom
-                        ? 'Where is the money from?'
-                        : 'Where is the money going?',
+                    _title,
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Let's get the details for your transfer",
-                    style: TextStyle(fontSize: 16, color: AppColors.navy),
-                  ),
+                  if (showSubtitle) ...[
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Let's get the details for your transfer",
+                      style: TextStyle(fontSize: 16, color: AppColors.navy),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   _StepTracker(
                     activeStep: _step,
-                    toLabel: _toAccount?.displayName,
+                    subLabels: [
+                      _toAccount?.displayName,
+                      _fromAccount?.displayName,
+                      _step >= 3 ? formatCurrency(_amountCents / 100) : null,
+                      null,
+                    ],
                   ),
-                  if (!isFrom) ...[
+                  if (_step == 0) ...[
                     const SizedBox(height: 20),
                     _SearchField(onTap: () => _notice('Search')),
                   ],
@@ -119,7 +168,12 @@ class _TransferScreenState extends State<TransferScreen> {
           Expanded(
             child: Container(
               color: AppColors.pageBackground,
-              child: isFrom ? _buildFromList() : _buildToList(),
+              child: switch (_step) {
+                0 => _buildToList(),
+                1 => _buildFromList(),
+                2 => _buildAmountStep(),
+                _ => _buildDateStep(),
+              },
             ),
           ),
         ],
@@ -163,7 +217,7 @@ class _TransferScreenState extends State<TransferScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Icon(Icons.north_east, color: AppColors.teal, size: 20),
+              Icon(Icons.north_east, color: AppColors.slate, size: 20),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -207,8 +261,165 @@ class _TransferScreenState extends State<TransferScreen> {
           for (final account in fromAccounts)
             _AccountCard(
               account: account,
-              onTap: () => _notice('Choosing an amount'),
+              onTap: () => _selectFrom(account),
             ),
+      ],
+    );
+  }
+
+  Widget _buildAmountStep() {
+    final from = _fromAccount;
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              const Text(
+                'Available to transfer from account',
+                style: TextStyle(fontSize: 12, color: AppColors.slate),
+              ),
+              const SizedBox(height: 8),
+              if (from != null)
+                SurfaceCard(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      const BecuBadge(),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(from.displayName,
+                            style: const TextStyle(fontSize: 16)),
+                      ),
+                      Text(
+                        formatCurrency(from.availableBalance),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 20),
+              const Text(
+                'Enter Amount',
+                style: TextStyle(fontSize: 12, color: AppColors.slate),
+              ),
+              const SizedBox(height: 8),
+              SurfaceCard(
+                padding: const EdgeInsets.symmetric(vertical: 36),
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8, right: 4),
+                        child: Text('\$',
+                            style: TextStyle(
+                                fontSize: 26, color: AppColors.navy)),
+                      ),
+                      Text(
+                        formatCurrency(_amountCents / 100).substring(1),
+                        style: const TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _amountCents > 0
+                      ? () => setState(() => _step = 3)
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.teal,
+                    disabledBackgroundColor: AppColors.monthBar,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              ],
+            ),
+          ),
+        ),
+        _Keypad(onDigit: _tapDigit, onBackspace: _backspace),
+      ],
+    );
+  }
+
+  Widget _buildDateStep() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      children: [
+        _CalendarCard(
+          selectedDay: _selectedDay,
+          onSelect: (day) => setState(() => _selectedDay = day),
+          onMonthChange: () => _notice('Changing the month'),
+        ),
+        const SizedBox(height: 16),
+        const Text('Note (Optional)',
+            style: TextStyle(fontSize: 12, color: AppColors.slate)),
+        const SizedBox(height: 8),
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'What is this for?',
+            hintStyle: const TextStyle(color: AppColors.slate),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.fieldBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.teal, width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: _setDate,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.teal,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Set Date',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -230,10 +441,8 @@ class _AccountCard extends StatelessWidget {
           const BecuBadge(),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              account.displayName,
-              style: const TextStyle(fontSize: 16),
-            ),
+            child: Text(account.displayName,
+                style: const TextStyle(fontSize: 16)),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -241,9 +450,7 @@ class _AccountCard extends StatelessWidget {
               Text(
                 formatCurrency(account.availableBalance),
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+                    fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const Text(
                 'Available Balance',
@@ -258,10 +465,10 @@ class _AccountCard extends StatelessWidget {
 }
 
 class _StepTracker extends StatelessWidget {
-  const _StepTracker({required this.activeStep, this.toLabel});
+  const _StepTracker({required this.activeStep, required this.subLabels});
 
   final int activeStep;
-  final String? toLabel;
+  final List<String?> subLabels;
 
   static const _labels = ['To', 'From', 'Amount', 'Date'];
 
@@ -272,7 +479,6 @@ class _StepTracker extends StatelessWidget {
         final stepWidth = constraints.maxWidth / _labels.length;
         return Stack(
           children: [
-            // Connector line behind the circles; teal up to the active step.
             Positioned(
               left: stepWidth / 2,
               right: stepWidth / 2,
@@ -337,12 +543,12 @@ class _StepTracker extends StatelessWidget {
                             color: AppColors.navy,
                           ),
                         ),
-                        if (i == 0 && toLabel != null)
+                        if (subLabels[i] != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 2, vertical: 2),
                             child: Text(
-                              toLabel!,
+                              subLabels[i]!,
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -361,6 +567,237 @@ class _StepTracker extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _Keypad extends StatelessWidget {
+  const _Keypad({required this.onDigit, required this.onBackspace});
+
+  final void Function(int) onDigit;
+  final VoidCallback onBackspace;
+
+  static const _letters = {
+    2: 'ABC',
+    3: 'DEF',
+    4: 'GHI',
+    5: 'JKL',
+    6: 'MNO',
+    7: 'PQRS',
+    8: 'TUV',
+    9: 'WXYZ',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    Widget digit(int d) => _KeypadKey(
+          onTap: () => onDigit(d),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('$d',
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.w400, height: 1.1)),
+              if (_letters[d] != null)
+                Text(
+                  _letters[d]!,
+                  style: const TextStyle(
+                      fontSize: 8,
+                      height: 1.1,
+                      letterSpacing: 1.5,
+                      color: AppColors.support),
+                ),
+            ],
+          ),
+        );
+
+    return Container(
+      color: const Color(0xFFD3D9DE),
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Row(children: [digit(1), digit(2), digit(3)]),
+            Row(children: [digit(4), digit(5), digit(6)]),
+            Row(children: [digit(7), digit(8), digit(9)]),
+            Row(
+              children: [
+                const _KeypadKey(child: Text('+ * #',
+                    style: TextStyle(fontSize: 20))),
+                digit(0),
+                _KeypadKey(
+                  onTap: onBackspace,
+                  filled: false,
+                  child: const Icon(Icons.backspace_outlined, size: 22),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _KeypadKey extends StatelessWidget {
+  const _KeypadKey({required this.child, this.onTap, this.filled = true});
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Material(
+          color: filled ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(height: 54, child: Center(child: child)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CalendarCard extends StatelessWidget {
+  const _CalendarCard({
+    required this.selectedDay,
+    required this.onSelect,
+    required this.onMonthChange,
+  });
+
+  final int selectedDay;
+  final ValueChanged<int> onSelect;
+  final VoidCallback onMonthChange;
+
+  static const _weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+  @override
+  Widget build(BuildContext context) {
+    final first = DateTime(2026, 6, 1);
+    final daysInMonth = DateTime(2026, 7, 0).day; // 30
+    final prevDays = DateTime(2026, 6, 0).day; // 31 (May)
+    final leading = first.weekday % 7; // Sun == 0
+
+    final cells = <(int day, bool inMonth)>[];
+    for (var k = 0; k < 42; k++) {
+      if (k < leading) {
+        cells.add((prevDays - leading + 1 + k, false));
+      } else if (k < leading + daysInMonth) {
+        cells.add((k - leading + 1, true));
+      } else {
+        cells.add((k - leading - daysInMonth + 1, false));
+      }
+    }
+
+    return SurfaceCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text('June 2026',
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w700)),
+              ),
+              InkWell(
+                onTap: onMonthChange,
+                child: const Icon(Icons.chevron_left, color: AppColors.teal),
+              ),
+              const SizedBox(width: 16),
+              InkWell(
+                onTap: onMonthChange,
+                child: const Icon(Icons.chevron_right, color: AppColors.teal),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              for (final w in _weekdays)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      w,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.slate),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (var row = 0; row < 6; row++)
+            Row(
+              children: [
+                for (var col = 0; col < 7; col++)
+                  Expanded(
+                    child: _DayCell(
+                      cell: cells[row * 7 + col],
+                      selected: cells[row * 7 + col].$2 &&
+                          cells[row * 7 + col].$1 == selectedDay,
+                      onSelect: onSelect,
+                    ),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DayCell extends StatelessWidget {
+  const _DayCell({
+    required this.cell,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final (int, bool) cell;
+  final bool selected;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final day = cell.$1;
+    final inMonth = cell.$2;
+    return AspectRatio(
+      aspectRatio: 1,
+      child: InkWell(
+        onTap: inMonth ? () => onSelect(day) : null,
+        customBorder: const CircleBorder(),
+        child: Center(
+          child: Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: selected
+                ? BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.teal, width: 1.5),
+                  )
+                : null,
+            child: Text(
+              '$day',
+              style: TextStyle(
+                fontSize: 16,
+                color: inMonth ? AppColors.navy : const Color(0xFFC4CDD5),
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
