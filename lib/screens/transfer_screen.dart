@@ -19,6 +19,7 @@ class TransferScreen extends StatefulWidget {
     this.initialFromAccount,
     this.initialAmountCents = 0,
     this.initialSelectedDay = 8,
+    this.initialKeypadOpen = false,
   });
 
   final int initialStep;
@@ -26,6 +27,7 @@ class TransferScreen extends StatefulWidget {
   final Account? initialFromAccount;
   final int initialAmountCents;
   final int initialSelectedDay;
+  final bool initialKeypadOpen;
 
   @override
   State<TransferScreen> createState() => _TransferScreenState();
@@ -37,8 +39,21 @@ class _TransferScreenState extends State<TransferScreen> {
   late Account? _fromAccount = widget.initialFromAccount;
   late int _amountCents = widget.initialAmountCents;
   late int _selectedDay = widget.initialSelectedDay;
+  late bool _keypadVisible = widget.initialKeypadOpen;
+  final FocusNode _amountFocus = FocusNode();
   bool _becuExpanded = true;
   bool _externalExpanded = true;
+
+  @override
+  void dispose() {
+    _amountFocus.dispose();
+    super.dispose();
+  }
+
+  void _openKeypad() {
+    setState(() => _keypadVisible = true);
+    _amountFocus.requestFocus();
+  }
 
   void _notice(String feature) {
     ScaffoldMessenger.of(context)
@@ -289,7 +304,7 @@ class _TransferScreenState extends State<TransferScreen> {
   Widget _buildAmountStep() {
     final from = _fromAccount;
     return Focus(
-      autofocus: true,
+      focusNode: _amountFocus,
       onKeyEvent: _handleAmountKey,
       child: Column(
         children: [
@@ -332,6 +347,7 @@ class _TransferScreenState extends State<TransferScreen> {
                   ),
                   const SizedBox(height: 8),
                   SurfaceCard(
+                    onTap: _openKeypad,
                     padding: const EdgeInsets.symmetric(vertical: 36),
                     child: Center(
                       child: Row(
@@ -385,7 +401,8 @@ class _TransferScreenState extends State<TransferScreen> {
               ),
             ),
           ),
-          _Keypad(onDigit: _tapDigit, onBackspace: _backspace),
+          if (_keypadVisible)
+            _Keypad(onDigit: _tapDigit, onBackspace: _backspace),
         ],
       ),
     );

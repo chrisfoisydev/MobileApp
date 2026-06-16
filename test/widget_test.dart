@@ -155,8 +155,11 @@ void main() {
     await tester.tap(find.text('Joint Checking ...4567'));
     await tester.pumpAndSettle();
 
-    // Amount step with keypad.
+    // Amount step: keypad is hidden until the amount field is tapped.
     expect(find.textContaining('How much would you like'), findsOneWidget);
+    expect(find.text('7'), findsNothing);
+    await tester.tap(find.text('0.00'));
+    await tester.pumpAndSettle();
     for (final key in ['7', '5', '0', '0']) {
       await tester.tap(find.text(key));
       await tester.pump();

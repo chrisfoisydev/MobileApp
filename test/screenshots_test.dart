@@ -74,6 +74,7 @@ void main() {
       initialToAccount: checkingAndSavings[2],
       initialFromAccount: jointChecking,
       initialAmountCents: 7500,
+      initialKeypadOpen: true,
     ),
     'transfer_date': TransferScreen(
       initialStep: 3,
