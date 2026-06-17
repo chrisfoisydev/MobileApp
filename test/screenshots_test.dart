@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
+import 'package:mobile_app/screens/add_bucket_sheet.dart';
 import 'package:mobile_app/screens/credit_card_detail_screen.dart';
 import 'package:mobile_app/screens/move_money_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
@@ -61,6 +62,13 @@ void main() {
         AccountDetailScreen(account: jointChecking, initialTab: 2),
     'savings_buckets':
         AccountDetailScreen(account: checkingAndSavings[2], initialTab: 1),
+    'add_bucket': const Scaffold(
+      backgroundColor: Colors.black54,
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: AddBucketSheet(),
+      ),
+    ),
     'credit_card': const CreditCardDetailScreen(
       account: visaCreditCard,
       initialTab: 1,

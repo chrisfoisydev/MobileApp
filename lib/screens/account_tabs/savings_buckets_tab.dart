@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/formatting.dart';
 import '../../data/models.dart';
 import '../../theme/app_theme.dart';
+import '../add_bucket_sheet.dart';
 
 /// Savings Buckets tab: a featured goal card plus a grid of smaller goal
 /// (purple) and saving-up (blue) buckets, with add tiles.
@@ -252,7 +253,7 @@ class _BucketGrid extends StatelessWidget {
       _AddTile(
         label: 'Add bucket',
         dashed: true,
-        onTap: () => onNotice(context, 'Adding a bucket'),
+        onTap: () => AddBucketSheet.show(context),
       ),
       _AddTile(
         label: 'Add funds to a bucket',

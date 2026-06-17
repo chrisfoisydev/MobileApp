@@ -33,18 +33,8 @@ const checkingAndSavings = [
     pendingTotal: 0,
     buckets: [
       SavingsBucket(
-        name: 'Down Payment',
-        saved: 10400,
-        goal: 50000,
-        daysLeft: '104 days left',
-        autoTransfer: true,
-        monthlyContribution: 1200,
-        featured: true,
-      ),
-      SavingsBucket(
         name: 'New Car Fund',
         saved: 10400,
-        goal: 25000,
         autoTransfer: true,
         monthlyContribution: 1200,
       ),

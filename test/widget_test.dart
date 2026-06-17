@@ -58,15 +58,25 @@ void main() {
     await tester.pumpAndSettle();
 
     // Savings accounts swap "Manage Card" for "Savings Buckets".
-    expect(find.text('Savings Buckets (3)'), findsOneWidget);
+    expect(find.text('Savings Buckets (2)'), findsOneWidget);
     expect(find.text('Manage Card'), findsNothing);
 
-    await tester.tap(find.text('Savings Buckets (3)'));
+    await tester.tap(find.text('Savings Buckets (2)'));
     await tester.pumpAndSettle();
-    expect(find.text('Down Payment'), findsOneWidget);
     expect(find.text('New Car Fund'), findsOneWidget);
     expect(find.text('Emergency Fund'), findsOneWidget);
     expect(find.text('Add bucket'), findsOneWidget);
+
+    // Add bucket opens the setup sheet.
+    await tester.tap(find.text('Add bucket'));
+    await tester.pumpAndSettle();
+    expect(find.text('Set up your bucket'), findsOneWidget);
+    expect(find.text('STEP 1 OF 2'), findsOneWidget);
+
+    // Name can be filled from a suggestion chip.
+    await tester.tap(find.text('Vacation'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Vacation'), findsOneWidget);
   });
 
   testWidgets('tapping a credit card opens the credit card view',
