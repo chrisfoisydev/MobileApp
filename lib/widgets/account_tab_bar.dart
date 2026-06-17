@@ -18,17 +18,23 @@ class AccountTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final (index, label) in tabs.indexed)
-          Expanded(
-            child: InkWell(
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (final (index, label) in tabs.indexed)
+            InkWell(
               onTap: () => onChanged(index),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOut,
-                height: 48,
-                alignment: Alignment.center,
+                // Tabs size to their label, with padding so longer labels
+                // (e.g. "Savings Buckets (2)") aren't squished.
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
                 decoration: BoxDecoration(
                   color: index == selectedIndex
                       ? AppColors.pageBackground
@@ -39,11 +45,6 @@ class AccountTabBar extends StatelessWidget {
                           ? AppColors.becuRed
                           : Colors.transparent,
                       width: 3,
-                    ),
-                    bottom: BorderSide(
-                      color: index == selectedIndex
-                          ? Colors.transparent
-                          : AppColors.borderSubtle,
                     ),
                   ),
                 ),
@@ -62,8 +63,8 @@ class AccountTabBar extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
