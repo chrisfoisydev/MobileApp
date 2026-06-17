@@ -57,7 +57,7 @@ class SavingsBucket {
     this.daysLeft,
     this.autoTransfer = false,
     this.monthlyContribution,
-    this.featured = false,
+    this.emoji,
   });
 
   final String name;
@@ -66,10 +66,10 @@ class SavingsBucket {
   final String? daysLeft;
   final bool autoTransfer;
   final double? monthlyContribution;
+  final String? emoji;
 
-  /// Renders as the large progress card at the top of the list.
-  final bool featured;
-
+  /// Goals (with a target) render as the large featured card and open the
+  /// goal detail view; saving-up jars render in the grid.
   bool get isGoal => goal != null;
 
   /// Fraction saved toward [goal] (0..1); 0 when there is no goal.

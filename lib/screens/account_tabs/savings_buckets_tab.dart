@@ -4,15 +4,21 @@ import '../../data/formatting.dart';
 import '../../data/models.dart';
 import '../../theme/app_theme.dart';
 import '../add_bucket_sheet.dart';
+import '../goal_detail_sheet.dart';
 
-/// Savings Buckets tab: a featured goal card plus a grid of smaller goal
-/// (purple) and saving-up (blue) buckets, with add tiles.
+/// Savings Buckets tab: a featured goal card (purple) plus a grid of
+/// saving-up jars (blue) and add tiles.
 class SavingsBucketsTab extends StatelessWidget {
-  const SavingsBucketsTab({super.key, required this.account});
+  const SavingsBucketsTab({
+    super.key,
+    required this.buckets,
+    required this.onAddBucket,
+  });
 
-  final Account account;
+  final List<SavingsBucket> buckets;
+  final ValueChanged<SavingsBucket> onAddBucket;
 
-  static const _purpleBg = Color(0xFFEDE7F9);
+  static const purpleBg = Color(0xFFEDE7F9);
   static const _purpleTrack = Color(0xFFD7CCEE);
   static const _purpleFill = Color(0xFF2E2150);
   static const _blueBg = Color(0xFFDCF0F3);
@@ -25,11 +31,15 @@ class SavingsBucketsTab extends StatelessWidget {
       );
   }
 
+  Future<void> _addBucket(BuildContext context) async {
+    final bucket = await AddBucketSheet.show(context);
+    if (bucket != null) onAddBucket(bucket);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final buckets = account.buckets;
-    final featured = buckets.where((b) => b.featured).toList();
-    final rest = buckets.where((b) => !b.featured).toList();
+    final featured = buckets.where((b) => b.isGoal).toList();
+    final rest = buckets.where((b) => !b.isGoal).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -63,10 +73,18 @@ class SavingsBucketsTab extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         for (final bucket in featured) ...[
-          _FeaturedBucketCard(bucket: bucket, onNotice: _notice),
+          _FeaturedBucketCard(
+            bucket: bucket,
+            onNotice: _notice,
+            onTap: () => GoalDetailSheet.show(context, bucket),
+          ),
           const SizedBox(height: 16),
         ],
-        _BucketGrid(buckets: rest, onNotice: _notice),
+        _BucketGrid(
+          buckets: rest,
+          onNotice: _notice,
+          onAddBucket: () => _addBucket(context),
+        ),
       ],
     );
   }
@@ -100,160 +118,178 @@ class _CountBadge extends StatelessWidget {
 }
 
 class _FeaturedBucketCard extends StatelessWidget {
-  const _FeaturedBucketCard({required this.bucket, required this.onNotice});
+  const _FeaturedBucketCard({
+    required this.bucket,
+    required this.onNotice,
+    required this.onTap,
+  });
 
   final SavingsBucket bucket;
   final void Function(BuildContext, String) onNotice;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final pct = (bucket.progress * 100).round();
     final toGo = (bucket.goal ?? 0) - bucket.saved;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: SavingsBucketsTab._purpleBg,
+    return Material(
+      color: SavingsBucketsTab.purpleBg,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  bucket.name,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
-                ),
-              ),
-              _EditPill(onTap: () => onNotice(context, 'Editing a bucket')),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              if (bucket.daysLeft != null)
-                _Pill(
-                  label: bucket.daysLeft!,
-                  background: Colors.white,
-                  textColor: AppColors.navy,
-                ),
-              if (bucket.daysLeft != null) const SizedBox(width: 8),
-              if (bucket.autoTransfer)
-                const _Pill(
-                  label: 'Auto-transfer',
-                  background: Color(0xFFD8F0F2),
-                  textColor: AppColors.teal,
-                  icon: Icons.bolt,
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                formatCurrency(bucket.saved),
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.navy,
-                ),
-              ),
-              Text(
-                ' / ${formatCurrency(bucket.goal ?? 0)}',
-                style: const TextStyle(fontSize: 16, color: AppColors.slate),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: bucket.progress,
-              minHeight: 10,
-              backgroundColor: SavingsBucketsTab._purpleTrack,
-              valueColor: const AlwaysStoppedAnimation(
-                  SavingsBucketsTab._purpleFill),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                '$pct% saved',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${formatCurrency(toGo)} to go',
-                style: const TextStyle(fontSize: 14, color: AppColors.slate),
-              ),
-            ],
-          ),
-          if (bucket.monthlyContribution != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
+              Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Monthly contribution',
-                      style: TextStyle(fontSize: 15, color: AppColors.slate),
+                      bucket.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                  ),
+                  _EditPill(onTap: () => onNotice(context, 'Editing a bucket')),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  if (bucket.daysLeft != null)
+                    _Pill(
+                      label: bucket.daysLeft!,
+                      background: Colors.white,
+                      textColor: AppColors.navy,
+                    ),
+                  if (bucket.daysLeft != null) const SizedBox(width: 8),
+                  if (bucket.autoTransfer)
+                    const _Pill(
+                      label: 'Auto-transfer',
+                      background: Color(0xFFD8F0F2),
+                      textColor: AppColors.teal,
+                      icon: Icons.bolt,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    formatCurrency(bucket.saved),
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.navy,
                     ),
                   ),
                   Text(
-                    '${formatCurrency(bucket.monthlyContribution!)}/mo',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () => onNotice(context, 'Editing the contribution'),
-                    child: const Icon(Icons.edit_outlined,
-                        size: 18, color: AppColors.teal),
+                    ' / ${formatCurrency(bucket.goal ?? 0)}',
+                    style:
+                        const TextStyle(fontSize: 16, color: AppColors.slate),
                   ),
                 ],
               ),
-            ),
-          ],
-        ],
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: bucket.progress,
+                  minHeight: 10,
+                  backgroundColor: SavingsBucketsTab._purpleTrack,
+                  valueColor: const AlwaysStoppedAnimation(
+                      SavingsBucketsTab._purpleFill),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    '$pct% saved',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.navy,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${formatCurrency(toGo)} to go',
+                    style:
+                        const TextStyle(fontSize: 14, color: AppColors.slate),
+                  ),
+                ],
+              ),
+              if (bucket.monthlyContribution != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Monthly contribution',
+                          style:
+                              TextStyle(fontSize: 15, color: AppColors.slate),
+                        ),
+                      ),
+                      Text(
+                        '${formatCurrency(bucket.monthlyContribution!)}/mo',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () =>
+                            onNotice(context, 'Editing the contribution'),
+                        child: const Icon(Icons.edit_outlined,
+                            size: 18, color: AppColors.teal),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
 class _BucketGrid extends StatelessWidget {
-  const _BucketGrid({required this.buckets, required this.onNotice});
+  const _BucketGrid({
+    required this.buckets,
+    required this.onNotice,
+    required this.onAddBucket,
+  });
 
   final List<SavingsBucket> buckets;
   final void Function(BuildContext, String) onNotice;
+  final VoidCallback onAddBucket;
 
   @override
   Widget build(BuildContext context) {
     final tiles = <Widget>[
-      for (final b in buckets)
-        _SmallBucketCard(bucket: b, onNotice: onNotice),
+      for (final b in buckets) _SmallBucketCard(bucket: b, onNotice: onNotice),
       _AddTile(
         label: 'Add bucket',
         dashed: true,
-        onTap: () => AddBucketSheet.show(context),
+        onTap: onAddBucket,
       ),
       _AddTile(
         label: 'Add funds to a bucket',
@@ -298,7 +334,7 @@ class _SmallBucketCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bucket.isGoal
-            ? SavingsBucketsTab._purpleBg
+            ? SavingsBucketsTab.purpleBg
             : SavingsBucketsTab._blueBg,
         borderRadius: BorderRadius.circular(12),
       ),

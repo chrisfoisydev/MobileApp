@@ -26,11 +26,13 @@ class AccountDetailScreen extends StatefulWidget {
 
 class _AccountDetailScreenState extends State<AccountDetailScreen> {
   late final bool _isSavings = widget.account.kind == AccountKind.savings;
-  late final List<String> _tabs = [
-    'Transactions',
-    _isSavings ? 'Savings Buckets (${widget.account.buckets.length})' : 'Manage Card',
-    'Details',
-  ];
+  late final List<SavingsBucket> _buckets = List.of(widget.account.buckets);
+
+  List<String> get _tabs => [
+        'Transactions',
+        _isSavings ? 'Savings Buckets (${_buckets.length})' : 'Manage Card',
+        'Details',
+      ];
 
   late int _tabIndex = widget.initialTab;
 
@@ -122,7 +124,10 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
               child: switch (_tabIndex) {
                 0 => TransactionsTab(account: account),
                 1 => _isSavings
-                    ? SavingsBucketsTab(account: account)
+                    ? SavingsBucketsTab(
+                        buckets: _buckets,
+                        onAddBucket: (b) => setState(() => _buckets.add(b)),
+                      )
                     : const ManageCardTab(),
                 _ => DetailsTab(account: account),
               },

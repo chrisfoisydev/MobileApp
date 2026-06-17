@@ -77,6 +77,26 @@ void main() {
     await tester.tap(find.text('Vacation'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(TextField, 'Vacation'), findsOneWidget);
+
+    // Continue to step 2, then create the goal bucket.
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('Saving details'), findsOneWidget);
+    expect(find.text('STEP 2 OF 2'), findsOneWidget);
+
+    await tester.tap(find.text('Create Bucket'));
+    await tester.pumpAndSettle();
+
+    // The new goal appears as a featured card and the count is now 3.
+    expect(find.text('Vacation'), findsOneWidget);
+    expect(find.text('Savings Buckets (3)'), findsOneWidget);
+
+    // Tapping the goal opens the detail sheet.
+    await tester.tap(find.text('Vacation'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add Funds'), findsOneWidget);
+    expect(find.text('Edit Goal'), findsOneWidget);
+    expect(find.text('Remove'), findsOneWidget);
   });
 
   testWidgets('tapping a credit card opens the credit card view',
