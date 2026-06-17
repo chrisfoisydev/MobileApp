@@ -21,6 +21,7 @@ import 'package:mobile_app/screens/add_bucket_sheet.dart';
 import 'package:mobile_app/screens/credit_card_detail_screen.dart';
 import 'package:mobile_app/screens/goal_detail_sheet.dart';
 import 'package:mobile_app/screens/move_money_screen.dart';
+import 'package:mobile_app/screens/my_profile_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
 import 'package:mobile_app/screens/transaction_detail_screen.dart';
 import 'package:mobile_app/screens/transfer_screen.dart';
@@ -112,6 +113,7 @@ void main() {
       account: visaCreditCard,
       initialTab: 1,
     ),
+    'my_profile': const MyProfileScreen(),
     'move_money': const MoveMoneyScreen(),
     'transfer': const TransferScreen(),
     'transfer_from': TransferScreen(

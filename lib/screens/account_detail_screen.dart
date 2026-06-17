@@ -15,10 +15,20 @@ import 'account_tabs/transactions_tab.dart';
 /// The middle tab is "Savings Buckets" for savings accounts and
 /// "Manage Card" otherwise.
 class AccountDetailScreen extends StatefulWidget {
-  const AccountDetailScreen({super.key, required this.account, this.initialTab = 0});
+  const AccountDetailScreen({
+    super.key,
+    required this.account,
+    this.initialTab = 0,
+    this.buckets,
+  });
 
   final Account account;
   final int initialTab;
+
+  /// Optional shared bucket list. When provided, edits made here are
+  /// visible to the caller (e.g. the summary's sub-balance chips). When
+  /// omitted, a private copy of [account.buckets] is used.
+  final List<SavingsBucket>? buckets;
 
   @override
   State<AccountDetailScreen> createState() => _AccountDetailScreenState();
@@ -26,7 +36,8 @@ class AccountDetailScreen extends StatefulWidget {
 
 class _AccountDetailScreenState extends State<AccountDetailScreen> {
   late final bool _isSavings = widget.account.kind == AccountKind.savings;
-  late final List<SavingsBucket> _buckets = List.of(widget.account.buckets);
+  late final List<SavingsBucket> _buckets =
+      widget.buckets ?? List.of(widget.account.buckets);
 
   List<String> get _tabs => [
         'Transactions',

@@ -50,6 +50,21 @@ void main() {
     expect(find.text('Account Details'), findsOneWidget);
   });
 
+  testWidgets('profile menu opens My Profile', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+    expect(find.text('My Profile'), findsOneWidget);
+    expect(find.text('Logout'), findsOneWidget);
+
+    await tester.tap(find.text('My Profile'));
+    await tester.pumpAndSettle();
+    expect(find.text('John Smith'), findsOneWidget);
+    expect(find.text('Contact Information'), findsOneWidget);
+  });
+
   testWidgets('a savings account shows the Savings Buckets tab',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: AccountSummaryScreen()));

@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../widgets/becu_logo.dart';
 import '../widgets/cascade_in.dart';
+import '../widgets/profile_menu_button.dart';
 import '../widgets/surface_card.dart';
 import 'account_detail_screen.dart';
 import 'credit_card_detail_screen.dart';
@@ -199,11 +200,7 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
                     icon: const Icon(Icons.notifications_none,
                         color: AppColors.navy),
                   ),
-                  IconButton(
-                    onPressed: () => _showPrototypeNotice('Profile'),
-                    icon:
-                        const Icon(Icons.person_outline, color: AppColors.navy),
-                  ),
+                  const ProfileMenuButton(),
                 ],
               ),
               const SizedBox(height: 8),
