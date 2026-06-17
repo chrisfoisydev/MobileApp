@@ -83,6 +83,14 @@ void main() {
     expect(find.text('Emergency Fund'), findsOneWidget);
     expect(find.text('Add bucket'), findsOneWidget);
 
+    // Tapping a saving-up bucket opens its detail; close it again.
+    await tester.tap(find.text('Emergency Fund'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add Funds'), findsOneWidget);
+    expect(find.text('Saved so far'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+
     // Add bucket opens the setup sheet.
     await tester.tap(find.text('Add bucket'));
     await tester.pumpAndSettle();

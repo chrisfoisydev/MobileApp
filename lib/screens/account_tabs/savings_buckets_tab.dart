@@ -343,101 +343,107 @@ class _SmallBucketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: bucket.isGoal
-            ? SavingsBucketsTab.purpleBg
-            : SavingsBucketsTab._blueBg,
+    return Material(
+      color: bucket.isGoal
+          ? SavingsBucketsTab.purpleBg
+          : SavingsBucketsTab._blueBg,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onEdit,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  bucket.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
-                ),
-              ),
-              if (bucket.autoTransfer)
-                const Icon(Icons.bolt, size: 16, color: AppColors.teal),
-              const SizedBox(width: 4),
-              InkWell(
-                onTap: onEdit,
-                child: const Icon(Icons.edit_outlined,
-                    size: 16, color: AppColors.teal),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            formatCurrency(bucket.saved),
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: AppColors.navy,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (bucket.monthlyContribution != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
+              Row(
                 children: [
-                  const Icon(Icons.bolt, size: 14, color: AppColors.teal),
-                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      '${formatCurrency(bucket.monthlyContribution!)}/mo',
+                      bucket.name,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
+                        color: AppColors.navy,
                       ),
                     ),
                   ),
+                  if (bucket.autoTransfer)
+                    const Icon(Icons.bolt, size: 16, color: AppColors.teal),
+                  const SizedBox(width: 4),
                   InkWell(
-                    onTap: () => onNotice(context, 'Editing the contribution'),
+                    onTap: onEdit,
                     child: const Icon(Icons.edit_outlined,
-                        size: 14, color: AppColors.teal),
+                        size: 16, color: AppColors.teal),
                   ),
                 ],
               ),
-            )
-          else
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: InkWell(
-                onTap: () => onNotice(context, 'Auto-transfer setup'),
-                child: const Text(
-                  'Set up auto-transfer',
-                  style: TextStyle(
-                    color: AppColors.teal,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColors.teal,
-                  ),
+              const SizedBox(height: 6),
+              Text(
+                formatCurrency(bucket.saved),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.navy,
                 ),
               ),
-            ),
-        ],
+              const SizedBox(height: 12),
+              if (bucket.monthlyContribution != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bolt, size: 14, color: AppColors.teal),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${formatCurrency(bucket.monthlyContribution!)}/mo',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () =>
+                            onNotice(context, 'Editing the contribution'),
+                        child: const Icon(Icons.edit_outlined,
+                            size: 14, color: AppColors.teal),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: InkWell(
+                    onTap: () => onNotice(context, 'Auto-transfer setup'),
+                    child: const Text(
+                      'Set up auto-transfer',
+                      style: TextStyle(
+                        color: AppColors.teal,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: AppColors.teal,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
