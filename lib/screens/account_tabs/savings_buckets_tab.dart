@@ -51,7 +51,7 @@ class SavingsBucketsTab extends StatelessWidget {
             _CountBadge(buckets.length),
             const Spacer(),
             InkWell(
-              onTap: () => _notice(context, 'New Bucket'),
+              onTap: () => _addBucket(context),
               child: const Row(
                 children: [
                   Icon(Icons.add, size: 18, color: AppColors.teal),
