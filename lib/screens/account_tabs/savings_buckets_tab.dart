@@ -42,7 +42,7 @@ class SavingsBucketsTab extends StatelessWidget {
     final rest = buckets.where((b) => !b.isGoal).toList();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       children: [
         Row(
           children: [

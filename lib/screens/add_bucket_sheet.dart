@@ -8,9 +8,14 @@ import '../theme/app_theme.dart';
 /// date, auto-transfer and contribution. Returns the created
 /// [SavingsBucket], or null if cancelled.
 class AddBucketSheet extends StatefulWidget {
-  const AddBucketSheet({super.key, this.initialStep = 0});
+  const AddBucketSheet({
+    super.key,
+    this.initialStep = 0,
+    this.initialJustSavingUp = false,
+  });
 
   final int initialStep;
+  final bool initialJustSavingUp;
 
   static Future<SavingsBucket?> show(BuildContext context) {
     return showModalBottomSheet<SavingsBucket>(
@@ -47,7 +52,8 @@ class _AddBucketSheetState extends State<AddBucketSheet> {
   final TextEditingController _contribution =
       TextEditingController(text: '\$1,200');
   int _emoji = 0;
-  _SaveType _saveType = _SaveType.target;
+  late _SaveType _saveType =
+      widget.initialJustSavingUp ? _SaveType.savingUp : _SaveType.target;
   int? _targetDate = 1; // 6 mo
   bool _autoTransfer = true;
   bool _monthly = true;
@@ -69,8 +75,8 @@ class _AddBucketSheetState extends State<AddBucketSheet> {
       saved: 0,
       goal: isTarget ? 50000 : null,
       emoji: _emojis[_emoji],
-      autoTransfer: _autoTransfer,
-      monthlyContribution: monthly,
+      autoTransfer: isTarget && _autoTransfer,
+      monthlyContribution: isTarget ? monthly : null,
       daysLeft: isTarget && _targetDate != null
           ? '${_targetDays[_targetDate!]} days left'
           : null,
@@ -106,7 +112,11 @@ class _AddBucketSheetState extends State<AddBucketSheet> {
           const SizedBox(height: 16),
           _Header(
             step: _step,
-            title: _step == 0 ? 'Set up your bucket' : 'Saving details',
+            title: _step == 0
+                ? 'Set up your bucket'
+                : (_saveType == _SaveType.target
+                    ? 'Saving details'
+                    : 'Confirm your bucket'),
             onClose: () => Navigator.of(context).maybePop(),
           ),
           const Divider(height: 24),
@@ -233,41 +243,90 @@ class _AddBucketSheetState extends State<AddBucketSheet> {
   }
 
   Widget _buildStep2() {
+    if (_saveType == _SaveType.savingUp) return _buildConfirm();
+    return _buildTargetDetails();
+  }
+
+  Widget _bucketBanner() {
     final isTarget = _saveType == _SaveType.target;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDE7F9),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Text(_emojis[_emoji], style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _name.text.trim().isEmpty ? 'New Bucket' : _name.text.trim(),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+              ),
+            ),
+          ),
+          Text(isTarget ? '🎯' : '🫙', style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 6),
+          Text(
+            isTarget ? 'Target Savings' : 'Saving Up',
+            style: const TextStyle(fontSize: 13, color: AppColors.slate),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfirm() {
     return ListView(
       shrinkWrap: true,
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
       children: [
+        _bucketBanner(),
+        const SizedBox(height: 24),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFFEDE7F9),
-            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+            border: Border.all(color: AppColors.borderSubtle),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
+          child: const Column(
             children: [
-              Text(_emojis[_emoji], style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _name.text.trim().isEmpty ? 'New Bucket' : _name.text.trim(),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
+              Icon(Icons.savings_outlined, size: 40, color: AppColors.teal),
+              SizedBox(height: 12),
+              Text(
+                'No target — just saving up',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.navy,
                 ),
               ),
-              Text(isTarget ? '🎯' : '🫙',
-                  style: const TextStyle(fontSize: 14)),
-              const SizedBox(width: 6),
+              SizedBox(height: 6),
               Text(
-                isTarget ? 'Target Savings' : 'Saving Up',
-                style: const TextStyle(fontSize: 13, color: AppColors.slate),
+                "You'll build this bucket at your own pace. You can add a "
+                'goal anytime.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: AppColors.slate),
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildTargetDetails() {
+    return ListView(
+      shrinkWrap: true,
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      children: [
+        _bucketBanner(),
         const SizedBox(height: 20),
         Row(
           children: [

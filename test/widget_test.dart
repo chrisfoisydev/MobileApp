@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
+import 'package:mobile_app/screens/add_bucket_sheet.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
 import 'package:mobile_app/screens/transfer_screen.dart';
 import 'package:mobile_app/screens/welcome_screen.dart';
@@ -93,7 +94,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(TextField, 'Vacation'), findsOneWidget);
 
-    // Continue to step 2, then create the goal bucket.
+    // 'Hit a target amount' is selected by default -> step 2 is the
+    // details form.
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(find.text('Saving details'), findsOneWidget);
@@ -112,6 +114,32 @@ void main() {
     expect(find.text('Add Funds'), findsOneWidget);
     expect(find.text('Edit Goal'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget);
+  });
+
+  testWidgets('"Just saving up" leads to a confirmation, not the form',
+      (tester) async {
+    tester.view.physicalSize = const Size(402, 874);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: AddBucketSheet())),
+    );
+    await tester.pumpAndSettle();
+
+    final savingUp = find.text('Just saving up');
+    await tester.scrollUntilVisible(savingUp, 120,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(savingUp);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Confirm your bucket'), findsOneWidget);
+    expect(find.text('No target — just saving up'), findsOneWidget);
+    // The details form fields are absent.
+    expect(find.text('TARGET DATE'), findsNothing);
+    expect(find.text('CONTRIBUTION'), findsNothing);
   });
 
   testWidgets('tapping a credit card opens the credit card view',

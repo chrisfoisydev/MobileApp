@@ -102,6 +102,13 @@ void main() {
         child: AddBucketSheet(initialStep: 1),
       ),
     ),
+    'add_bucket_confirm': const Scaffold(
+      backgroundColor: Colors.black54,
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: AddBucketSheet(initialStep: 1, initialJustSavingUp: true),
+      ),
+    ),
     'goal_detail': const Scaffold(
       backgroundColor: Colors.black54,
       body: Align(
