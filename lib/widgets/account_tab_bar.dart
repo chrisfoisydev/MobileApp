@@ -24,42 +24,45 @@ class AccountTabBar extends StatelessWidget {
         border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           for (final (index, label) in tabs.indexed)
-            InkWell(
-              onTap: () => onChanged(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                // Tabs size to their label, with padding so longer labels
-                // (e.g. "Savings Buckets (2)") aren't squished.
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-                decoration: BoxDecoration(
-                  color: index == selectedIndex
-                      ? AppColors.pageBackground
-                      : Colors.white,
-                  border: Border(
-                    top: BorderSide(
-                      color: index == selectedIndex
-                          ? AppColors.becuRed
-                          : Colors.transparent,
-                      width: 3,
+            // Flex by label length so tabs fill the full width with no gaps
+            // while the longer "Savings Buckets" tab still gets enough room.
+            Expanded(
+              flex: label.length,
+              child: InkWell(
+                onTap: () => onChanged(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  height: 50,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: index == selectedIndex
+                        ? AppColors.pageBackground
+                        : Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: index == selectedIndex
+                            ? AppColors.becuRed
+                            : Colors.transparent,
+                        width: 3,
+                      ),
                     ),
                   ),
-                ),
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 220),
-                  // Inherit the themed font family, only overriding size /
-                  // weight / color.
-                  style: DefaultTextStyle.of(context).style.copyWith(
-                        fontSize: 14,
-                        fontWeight: index == selectedIndex
-                            ? FontWeight.w700
-                            : FontWeight.w400,
-                        color: AppColors.navy,
-                      ),
-                  child: Text(label),
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 220),
+                    // Inherit the themed font family, only overriding size /
+                    // weight / color.
+                    style: DefaultTextStyle.of(context).style.copyWith(
+                          fontSize: 14,
+                          fontWeight: index == selectedIndex
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: AppColors.navy,
+                        ),
+                    child: Text(label, maxLines: 1),
+                  ),
                 ),
               ),
             ),
