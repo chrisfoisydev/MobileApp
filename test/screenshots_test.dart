@@ -116,6 +116,13 @@ void main() {
         child: GoalDetailSheet(bucket: _downPaymentGoal),
       ),
     ),
+    'goal_detail_savingup': Scaffold(
+      backgroundColor: Colors.black54,
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: GoalDetailSheet(bucket: checkingAndSavings[2].buckets[1]),
+      ),
+    ),
     'credit_card': const CreditCardDetailScreen(
       account: visaCreditCard,
       initialTab: 1,

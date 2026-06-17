@@ -84,6 +84,7 @@ class SavingsBucketsTab extends StatelessWidget {
           buckets: rest,
           onNotice: _notice,
           onAddBucket: () => _addBucket(context),
+          onOpenBucket: (b) => GoalDetailSheet.show(context, b),
         ),
       ],
     );
@@ -155,7 +156,7 @@ class _FeaturedBucketCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _EditPill(onTap: () => onNotice(context, 'Editing a bucket')),
+                  _EditPill(onTap: onTap),
                 ],
               ),
               const SizedBox(height: 10),
@@ -276,16 +277,23 @@ class _BucketGrid extends StatelessWidget {
     required this.buckets,
     required this.onNotice,
     required this.onAddBucket,
+    required this.onOpenBucket,
   });
 
   final List<SavingsBucket> buckets;
   final void Function(BuildContext, String) onNotice;
   final VoidCallback onAddBucket;
+  final ValueChanged<SavingsBucket> onOpenBucket;
 
   @override
   Widget build(BuildContext context) {
     final tiles = <Widget>[
-      for (final b in buckets) _SmallBucketCard(bucket: b, onNotice: onNotice),
+      for (final b in buckets)
+        _SmallBucketCard(
+          bucket: b,
+          onNotice: onNotice,
+          onEdit: () => onOpenBucket(b),
+        ),
       _AddTile(
         label: 'Add bucket',
         dashed: true,
@@ -323,10 +331,15 @@ class _BucketGrid extends StatelessWidget {
 }
 
 class _SmallBucketCard extends StatelessWidget {
-  const _SmallBucketCard({required this.bucket, required this.onNotice});
+  const _SmallBucketCard({
+    required this.bucket,
+    required this.onNotice,
+    required this.onEdit,
+  });
 
   final SavingsBucket bucket;
   final void Function(BuildContext, String) onNotice;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -357,7 +370,7 @@ class _SmallBucketCard extends StatelessWidget {
                 const Icon(Icons.bolt, size: 16, color: AppColors.teal),
               const SizedBox(width: 4),
               InkWell(
-                onTap: () => onNotice(context, 'Editing a bucket'),
+                onTap: onEdit,
                 child: const Icon(Icons.edit_outlined,
                     size: 16, color: AppColors.teal),
               ),

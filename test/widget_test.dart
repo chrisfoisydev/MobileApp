@@ -108,9 +108,10 @@ void main() {
     expect(find.text('Vacation'), findsOneWidget);
     expect(find.text('Savings Buckets (3)'), findsOneWidget);
 
-    // Tapping the goal opens the detail sheet.
-    await tester.tap(find.text('Vacation'));
+    // Editing the goal (the "Edit" pill) opens the detail sheet for it.
+    await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
+    expect(find.text('Vacation'), findsWidgets);
     expect(find.text('Add Funds'), findsOneWidget);
     expect(find.text('Edit Goal'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget);

@@ -52,6 +52,7 @@ class GoalDetailSheet extends StatelessWidget {
     final pct = (bucket.progress * 100).round();
     final toGo = (bucket.goal ?? 0) - bucket.saved;
     final monthly = bucket.monthlyContribution;
+    final hasGoal = bucket.isGoal;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -127,42 +128,53 @@ class GoalDetailSheet extends StatelessWidget {
                         color: Color(0xFF2E2150),
                       ),
                     ),
-                    Text(
-                      ' / ${formatCurrency(bucket.goal ?? 0)}',
-                      style:
-                          const TextStyle(fontSize: 16, color: AppColors.slate),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: bucket.progress,
-                    minHeight: 10,
-                    backgroundColor: const Color(0xFFD7CCEE),
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFF2E2150)),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      '$pct% saved',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
+                    if (hasGoal)
+                      Text(
+                        ' / ${formatCurrency(bucket.goal ?? 0)}',
+                        style: const TextStyle(
+                            fontSize: 16, color: AppColors.slate),
                       ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${formatCurrency(toGo)} to go',
-                      style:
-                          const TextStyle(fontSize: 14, color: AppColors.slate),
-                    ),
                   ],
                 ),
+                if (hasGoal) ...[
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: bucket.progress,
+                      minHeight: 10,
+                      backgroundColor: const Color(0xFFD7CCEE),
+                      valueColor:
+                          const AlwaysStoppedAnimation(Color(0xFF2E2150)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        '$pct% saved',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${formatCurrency(toGo)} to go',
+                        style: const TextStyle(
+                            fontSize: 14, color: AppColors.slate),
+                      ),
+                    ],
+                  ),
+                ] else
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Saved so far',
+                      style: TextStyle(fontSize: 14, color: AppColors.slate),
+                    ),
+                  ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -175,7 +187,7 @@ class GoalDetailSheet extends StatelessWidget {
                     const SizedBox(width: 12),
                     _ActionCard(
                       icon: Icons.edit_outlined,
-                      label: 'Edit Goal',
+                      label: hasGoal ? 'Edit Goal' : 'Add Goal',
                       color: AppColors.teal,
                       onTap: () => _notice(context, 'Editing the goal'),
                     ),
@@ -199,18 +211,21 @@ class GoalDetailSheet extends StatelessWidget {
                       _DetailRow(
                         label: 'Monthly Contribution',
                         value: monthly == null
-                            ? '—'
+                            ? 'Not set'
                             : '${formatCurrency(monthly)}/mo',
+                        showDivider: hasGoal,
                       ),
-                      _DetailRow(
-                        label: 'On track to reach goal',
-                        value: _reachBy,
-                      ),
-                      _DetailRow(
-                        label: 'Target Amount',
-                        value: formatCurrency(bucket.goal ?? 0),
-                        showDivider: false,
-                      ),
+                      if (hasGoal) ...[
+                        _DetailRow(
+                          label: 'On track to reach goal',
+                          value: _reachBy,
+                        ),
+                        _DetailRow(
+                          label: 'Target Amount',
+                          value: formatCurrency(bucket.goal ?? 0),
+                          showDivider: false,
+                        ),
+                      ],
                     ],
                   ),
                 ),
