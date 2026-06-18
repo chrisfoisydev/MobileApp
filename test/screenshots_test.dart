@@ -171,7 +171,7 @@ void main() {
 
       await tester.pumpWidget(MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(useGoogleFonts: false),
+        theme: AppTheme.light(),
         builder: deviceFrameBuilder,
         home: entry.value,
       ));

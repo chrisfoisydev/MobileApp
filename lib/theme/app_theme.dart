@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Design tokens pulled from the BECU Figma libraries.
 abstract final class AppColors {
@@ -27,9 +26,7 @@ abstract final class AppTextStyles {
 }
 
 abstract final class AppTheme {
-  /// [useGoogleFonts] exists for tests, which can't fetch Public Sans at
-  /// runtime; everything else about the theme stays identical.
-  static ThemeData light({bool useGoogleFonts = true}) {
+  static ThemeData light() {
     final base = ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: Colors.white,
@@ -38,10 +35,8 @@ abstract final class AppTheme {
         primary: AppColors.teal,
       ),
     );
-    final textTheme =
-        useGoogleFonts ? GoogleFonts.publicSansTextTheme(base.textTheme) : base.textTheme;
     return base.copyWith(
-      textTheme: textTheme.apply(
+      textTheme: base.textTheme.apply(
         bodyColor: AppColors.navy,
         displayColor: AppColors.navy,
       ),
