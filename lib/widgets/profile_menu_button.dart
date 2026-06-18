@@ -12,7 +12,7 @@ class ProfileMenuButton extends StatelessWidget {
   static const _labels = {
     'messages': 'Messages',
     'approvals': 'Approval Requests',
-    'security': 'Security Center',
+    'alerts': 'Alerts & Notifications',
   };
 
   void _handle(BuildContext context, String value) {
@@ -73,7 +73,7 @@ class ProfileMenuButton extends StatelessWidget {
         const PopupMenuDivider(),
         _item('approvals', 'Approval Requests (2)'),
         const PopupMenuDivider(),
-        _item('security', 'Security Center'),
+        _item('alerts', 'Alerts & Notifications'),
         const PopupMenuDivider(),
         const PopupMenuItem<String>(
           value: 'logout',
