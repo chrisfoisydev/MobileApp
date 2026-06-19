@@ -38,6 +38,9 @@ class TransferScreen extends StatefulWidget {
 
 class _TransferScreenState extends State<TransferScreen> {
   late int _step = widget.initialStep;
+  // Direction of the last step change; drives the slide direction of the
+  // animated transition between steps.
+  bool _forward = true;
   late Account? _toAccount = widget.initialToAccount;
   late Account? _fromAccount = widget.initialFromAccount;
   late int _amountCents = widget.initialAmountCents;
@@ -73,15 +76,22 @@ class _TransferScreenState extends State<TransferScreen> {
       );
   }
 
-  void _selectTo(Account account) => setState(() {
-        _toAccount = account;
-        _step = 1;
+  /// Moves to [next], recording the direction so the body transition slides
+  /// the right way (forward → in from the right, back → in from the left).
+  void _goToStep(int next) => setState(() {
+        _forward = next >= _step;
+        _step = next;
       });
 
-  void _selectFrom(Account account) => setState(() {
-        _fromAccount = account;
-        _step = 2;
-      });
+  void _selectTo(Account account) {
+    _toAccount = account;
+    _goToStep(1);
+  }
+
+  void _selectFrom(Account account) {
+    _fromAccount = account;
+    _goToStep(2);
+  }
 
   void _tapDigit(int d) => setState(() {
         _amountCents = (_amountCents * 10 + d).clamp(0, 99999999);
@@ -112,15 +122,15 @@ class _TransferScreenState extends State<TransferScreen> {
 
   void _back() {
     if (_step > 0) {
-      setState(() => _step -= 1);
+      _goToStep(_step - 1);
     } else {
       Navigator.of(context).maybePop();
     }
   }
 
-  void _toReview() => setState(() => _step = 4);
+  void _toReview() => _goToStep(4);
 
-  void _editStep(int step) => setState(() => _step = step);
+  void _editStep(int step) => _goToStep(step);
 
   void _confirm() {
     ScaffoldMessenger.of(context)
@@ -182,12 +192,27 @@ class _TransferScreenState extends State<TransferScreen> {
                       ),
                     ],
                   ),
-                  Text(
-                    _title,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 280),
+                    switchInCurve: Curves.easeOutCubic,
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.12),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    ),
+                    child: Text(
+                      _title,
+                      key: ValueKey(_title),
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                      ),
                     ),
                   ),
                   if (showSubtitle) ...[
@@ -220,13 +245,44 @@ class _TransferScreenState extends State<TransferScreen> {
           Expanded(
             child: Container(
               color: AppColors.pageBackground,
-              child: switch (_step) {
-                0 => _buildToList(),
-                1 => _buildFromList(),
-                2 => _buildAmountStep(),
-                3 => _buildDateStep(),
-                _ => _buildReviewStep(),
-              },
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  // Incoming step slides toward center; on the way out a step
+                  // slides off the opposite edge (animation runs in reverse),
+                  // so the two read as one continuous push.
+                  final slide = _forward
+                      ? const Offset(0.08, 0)
+                      : const Offset(-0.08, 0);
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(begin: slide, end: Offset.zero)
+                          .animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                layoutBuilder: (currentChild, previousChildren) => Stack(
+                  alignment: Alignment.topCenter,
+                  children: [
+                    ...previousChildren,
+                    if (currentChild != null) currentChild,
+                  ],
+                ),
+                child: KeyedSubtree(
+                  key: ValueKey(_step > 4 ? 4 : _step),
+                  child: switch (_step) {
+                    0 => _buildToList(),
+                    1 => _buildFromList(),
+                    2 => _buildAmountStep(),
+                    3 => _buildDateStep(),
+                    _ => _buildReviewStep(),
+                  },
+                ),
+              ),
             ),
           ),
         ],
@@ -395,9 +451,7 @@ class _TransferScreenState extends State<TransferScreen> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: _amountCents > 0
-                          ? () => setState(() => _step = 3)
-                          : null,
+                      onPressed: _amountCents > 0 ? () => _goToStep(3) : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.teal,
                         disabledBackgroundColor: AppColors.monthBar,
@@ -639,7 +693,8 @@ class _StepTracker extends StatelessWidget {
                 children: [
                   for (var i = 0; i < _labels.length - 1; i++)
                     Expanded(
-                      child: Container(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
                         height: 1.5,
                         color: i < activeStep
                             ? AppColors.teal
@@ -657,7 +712,8 @@ class _StepTracker extends StatelessWidget {
                     width: stepWidth,
                     child: Column(
                       children: [
-                        Container(
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
                           width: 30,
                           height: 30,
                           alignment: Alignment.center,

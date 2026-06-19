@@ -8,27 +8,21 @@ import '../widgets/becu_logo.dart';
 import '../widgets/tab_content_switcher.dart';
 import 'account_tabs/details_tab.dart';
 import 'account_tabs/manage_card_tab.dart';
-import 'account_tabs/savings_buckets_tab.dart';
 import 'account_tabs/transactions_tab.dart';
 
-/// Account view: balance header, action buttons and a three-tab switcher.
-/// The middle tab is "Savings Buckets" for savings accounts and
-/// "Manage Card" otherwise.
+/// Account view: balance header, action buttons and a tab switcher.
+/// Checking/credit accounts show Transactions, Manage Card and Details;
+/// savings accounts have no card to manage, so they show Transactions and
+/// Details only.
 class AccountDetailScreen extends StatefulWidget {
   const AccountDetailScreen({
     super.key,
     required this.account,
     this.initialTab = 0,
-    this.buckets,
   });
 
   final Account account;
   final int initialTab;
-
-  /// Optional shared bucket list. When provided, edits made here are
-  /// visible to the caller (e.g. the summary's sub-balance chips). When
-  /// omitted, a private copy of [account.buckets] is used.
-  final List<SavingsBucket>? buckets;
 
   @override
   State<AccountDetailScreen> createState() => _AccountDetailScreenState();
@@ -36,16 +30,27 @@ class AccountDetailScreen extends StatefulWidget {
 
 class _AccountDetailScreenState extends State<AccountDetailScreen> {
   late final bool _isSavings = widget.account.kind == AccountKind.savings;
-  late final List<SavingsBucket> _buckets =
-      widget.buckets ?? List.of(widget.account.buckets);
 
-  List<String> get _tabs => [
-        'Transactions',
-        _isSavings ? 'Savings Buckets (${_buckets.length})' : 'Manage Card',
-        'Details',
-      ];
+  late final List<String> _tabs = _isSavings
+      ? const ['Transactions', 'Details']
+      : const ['Transactions', 'Manage Card', 'Details'];
 
   late int _tabIndex = widget.initialTab;
+
+  Widget _tabContent(Account account) {
+    // Savings: [Transactions, Details]. Others: [Transactions, Manage Card,
+    // Details].
+    if (_isSavings) {
+      return _tabIndex == 0
+          ? TransactionsTab(account: account)
+          : DetailsTab(account: account);
+    }
+    return switch (_tabIndex) {
+      0 => TransactionsTab(account: account),
+      1 => const ManageCardTab(),
+      _ => DetailsTab(account: account),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,16 +137,7 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
           Expanded(
             child: TabContentSwitcher(
               index: _tabIndex,
-              child: switch (_tabIndex) {
-                0 => TransactionsTab(account: account),
-                1 => _isSavings
-                    ? SavingsBucketsTab(
-                        buckets: _buckets,
-                        onAddBucket: (b) => setState(() => _buckets.add(b)),
-                      )
-                    : const ManageCardTab(),
-                _ => DetailsTab(account: account),
-              },
+              child: _tabContent(account),
             ),
           ),
         ],

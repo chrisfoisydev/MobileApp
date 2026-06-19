@@ -103,39 +103,23 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
                         onTap: () => _openAccount(account),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            Row(
-                              children: [
-                                const BecuBadge(),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    account.displayName,
-                                    style: const TextStyle(fontSize: 15),
-                                  ),
-                                ),
-                                Text(
-                                  formatCurrency(account.availableBalance),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (account.buckets.isNotEmpty) ...[
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  for (final b in account.buckets)
-                                    _BucketChip(bucket: b),
-                                ],
+                            const BecuBadge(),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                account.displayName,
+                                style: const TextStyle(fontSize: 15),
                               ),
-                            ],
+                            ),
+                            Text(
+                              formatCurrency(account.availableBalance),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -348,47 +332,6 @@ class _SectionHeader extends StatelessWidget {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A savings-bucket chip shown under an account on the summary
-/// (e.g. "Emergency Fund $8,000").
-class _BucketChip extends StatelessWidget {
-  const _BucketChip({required this.bucket});
-
-  final SavingsBucket bucket;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF4F5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            bucket.name,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.navy,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            formatCurrency(bucket.saved),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.teal,
-            ),
-          ),
         ],
       ),
     );

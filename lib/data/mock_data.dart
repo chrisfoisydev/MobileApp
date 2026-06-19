@@ -31,15 +31,6 @@ const checkingAndSavings = [
     availableBalance: 34145.89,
     postedBalance: 34145.89,
     pendingTotal: 0,
-    buckets: [
-      SavingsBucket(
-        name: 'New Car Fund',
-        saved: 10400,
-        autoTransfer: true,
-        monthlyContribution: 1200,
-      ),
-      SavingsBucket(name: 'Emergency Fund', saved: 8000),
-    ],
   ),
 ];
 

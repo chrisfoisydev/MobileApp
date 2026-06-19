@@ -14,12 +14,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mobile_app/data/mock_data.dart';
-import 'package:mobile_app/data/models.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
-import 'package:mobile_app/screens/add_bucket_sheet.dart';
 import 'package:mobile_app/screens/credit_card_detail_screen.dart';
-import 'package:mobile_app/screens/goal_detail_sheet.dart';
 import 'package:mobile_app/screens/move_money_screen.dart';
 import 'package:mobile_app/screens/my_profile_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
@@ -28,27 +25,6 @@ import 'package:mobile_app/screens/transfer_screen.dart';
 import 'package:mobile_app/screens/welcome_screen.dart';
 import 'package:mobile_app/theme/app_theme.dart';
 import 'package:mobile_app/widgets/status_bar.dart';
-
-const _downPaymentGoal = SavingsBucket(
-  name: 'Down Payment',
-  saved: 10400,
-  goal: 50000,
-  daysLeft: '104 days left',
-  autoTransfer: true,
-  monthlyContribution: 1200,
-  emoji: '🏡',
-);
-
-final _savingsWithGoal = Account(
-  nickname: 'Joint Savings',
-  officialName: 'Savings Account Mbr Share 01',
-  last4: '6789',
-  kind: AccountKind.savings,
-  availableBalance: 34145.89,
-  postedBalance: 34145.89,
-  pendingTotal: 0,
-  buckets: [_downPaymentGoal, ...checkingAndSavings[2].buckets],
-);
 
 const _enabled = bool.fromEnvironment('screenshots');
 
@@ -84,45 +60,6 @@ void main() {
         AccountDetailScreen(account: jointChecking, initialTab: 1),
     'account_details':
         AccountDetailScreen(account: jointChecking, initialTab: 2),
-    'savings_buckets':
-        AccountDetailScreen(account: checkingAndSavings[2], initialTab: 1),
-    'savings_buckets_goal':
-        AccountDetailScreen(account: _savingsWithGoal, initialTab: 1),
-    'add_bucket': const Scaffold(
-      backgroundColor: Colors.black54,
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: AddBucketSheet(),
-      ),
-    ),
-    'add_bucket_details': const Scaffold(
-      backgroundColor: Colors.black54,
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: AddBucketSheet(initialStep: 1),
-      ),
-    ),
-    'add_bucket_confirm': const Scaffold(
-      backgroundColor: Colors.black54,
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: AddBucketSheet(initialStep: 1, initialJustSavingUp: true),
-      ),
-    ),
-    'goal_detail': const Scaffold(
-      backgroundColor: Colors.black54,
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: GoalDetailSheet(bucket: _downPaymentGoal),
-      ),
-    ),
-    'goal_detail_savingup': Scaffold(
-      backgroundColor: Colors.black54,
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: GoalDetailSheet(bucket: checkingAndSavings[2].buckets[1]),
-      ),
-    ),
     'credit_card': const CreditCardDetailScreen(
       account: visaCreditCard,
       initialTab: 1,
