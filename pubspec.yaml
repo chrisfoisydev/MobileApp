@@ -9,6 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Pure-Dart GSAP-style timeline/tween library (no native plugin) used to
+  # choreograph the login fly-through. three_dart was intentionally NOT used:
+  # it depends on flutter_gl (a native plugin) which breaks plugin-free builds.
+  flutter_gsap: ^0.1.0
 
 dev_dependencies:
   flutter_test:
