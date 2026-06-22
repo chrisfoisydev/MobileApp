@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+# Exception: this is a throwaway PROTOTYPE signing key, committed on purpose so
+# every CI-built APK is signed identically and installs over the previous one.
+# Do NOT use it for a real Play Store release.
+!app/becu-proto.jks

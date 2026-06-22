@@ -25,11 +25,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        // Throwaway PROTOTYPE key committed to the repo so every build (CI or
+        // local) is signed identically and APKs install over each other. Not
+        // for a real Play Store release.
+        create("becu") {
+            storeFile = file("becu-proto.jks")
+            storePassword = "becuproto"
+            keyAlias = "becu"
+            keyPassword = "becuproto"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("becu")
         }
     }
 }
