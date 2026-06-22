@@ -112,13 +112,6 @@ class LoginScene extends StatelessWidget {
               gradient: RadialGradient(
                 colors: [Colors.white, Color(0xFFFFE6BE)],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x66FFE3B0),
-                  blurRadius: 48,
-                  spreadRadius: 12,
-                ),
-              ],
             ),
           ),
         ),
@@ -211,14 +204,7 @@ class LoginScene extends StatelessWidget {
     return Positioned.fill(
       child: CustomPaint(painter: _WaterPainter(horizon: _horizon))
           .animate()
-          .fadeIn(delay: 760.ms, duration: 1200.ms)
-          .animate(onPlay: (c) => c.repeat())
-          .shimmer(
-            delay: 1600.ms,
-            duration: 3200.ms,
-            color: Colors.white.withValues(alpha: 0.22),
-            angle: 0.2,
-          ),
+          .fadeIn(delay: 760.ms, duration: 1200.ms),
     );
   }
 
@@ -236,7 +222,7 @@ class LoginScene extends StatelessWidget {
 
   List<Widget> _stars(Size size) {
     final rng = math.Random(5);
-    return List.generate(10, (i) {
+    return List.generate(6, (i) {
       final x = rng.nextDouble() * size.width;
       final y = rng.nextDouble() * size.height * 0.34;
       final s = 1.5 + rng.nextDouble() * 1.8;
@@ -266,7 +252,7 @@ class LoginScene extends StatelessWidget {
     final w = size.width;
     final h = size.height;
     final rng = math.Random(near ? 41 : 17);
-    final count = near ? 3 : 4;
+    final count = 2; // fewer for software-rendered GPUs
     return List.generate(count, (i) {
       final depth = near ? 0.7 + rng.nextDouble() * 0.3 : rng.nextDouble() * 0.4;
       final cw = w * (near ? 0.5 : 0.34) * (0.7 + depth);
@@ -301,7 +287,7 @@ class LoginScene extends StatelessWidget {
     final w = size.width;
     final h = size.height;
     final rng = math.Random(23);
-    return List.generate(16, (i) {
+    return List.generate(8, (i) {
       final depth = rng.nextDouble();
       final s = 3.0 + depth * 9.0;
       final x = rng.nextDouble() * w;
@@ -582,8 +568,7 @@ class _HazePainter extends CustomPainter {
             Colors.white.withValues(alpha: 0.34),
             Colors.white.withValues(alpha: 0.0),
           ],
-        ).createShader(band)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
+        ).createShader(band),
     );
   }
 
@@ -599,15 +584,19 @@ class _CloudPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rng = math.Random(seed);
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: alpha)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
     final cy = size.height * 0.6;
     final puffs = 4 + rng.nextInt(3);
     for (var i = 0; i < puffs; i++) {
       final px = size.width * (0.12 + 0.76 * (i / (puffs - 1)));
       final py = cy + (rng.nextDouble() - 0.5) * size.height * 0.4;
-      final r = size.height * (0.4 + rng.nextDouble() * 0.45);
+      final r = size.height * (0.45 + rng.nextDouble() * 0.5);
+      final paint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.white.withValues(alpha: alpha),
+            Colors.white.withValues(alpha: 0),
+          ],
+        ).createShader(Rect.fromCircle(center: Offset(px, py), radius: r));
       canvas.drawCircle(Offset(px, py), r, paint);
     }
   }
