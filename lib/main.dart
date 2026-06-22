@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'screens/welcome_screen.dart';
 import 'theme/app_theme.dart';
-import 'widgets/status_bar.dart';
 
-void main() => runApp(const BecuPrototypeApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Hide the system status bar (clock/battery/signal) for a clean, full-bleed
+  // prototype; keep the bottom navigation buttons available.
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.manual,
+    overlays: [SystemUiOverlay.bottom],
+  );
+  runApp(const BecuPrototypeApp());
+}
 
 class BecuPrototypeApp extends StatelessWidget {
   const BecuPrototypeApp({super.key});
@@ -15,7 +24,6 @@ class BecuPrototypeApp extends StatelessWidget {
       title: 'BECU Prototype',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      builder: deviceFrameBuilder,
       home: const WelcomeScreen(),
     );
   }
