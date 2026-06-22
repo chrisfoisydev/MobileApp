@@ -1,0 +1,58 @@
+name: Build Android APK
+
+# Builds an installable APK on GitHub's runners (which have the Android SDK
+# and aren't behind a corporate firewall) and uploads it as a downloadable
+# artifact. Runs on every push to the feature branch and can also be started
+# manually from the repository's Actions tab ("Run workflow").
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/intelligent-ride-guc3re]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Pinned to the same Flutter the project was generated with so the
+      # bundled Gradle plugin matches the repo's AGP 9 / Gradle 9 toolchain.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.2
+          channel: stable
+          cache: true
+
+      - run: flutter --version
+      - run: flutter pub get
+
+      # Release build: AOT-compiled, so it runs noticeably faster than a debug
+      # build on an unaccelerated emulator. The project's release build type is
+      # debug-signed, so the APK installs without extra signing setup.
+      - name: Build release APK
+        run: flutter build apk --release
+
+      # Debug build as a guaranteed-installable fallback.
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Collect APKs
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/becu-release.apk
+          cp build/app/outputs/flutter-apk/app-debug.apk dist/becu-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: becu-apk
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 14
