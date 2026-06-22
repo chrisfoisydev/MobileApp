@@ -1,445 +1,489 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gsap/flutter_gsap.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
-/// A cinematic "flying around Seattle" backdrop for the login screen.
+/// A layered, animated Seattle-dawn backdrop for the login screen.
 ///
-/// Everything is drawn with [CustomPainter] and driven by Flutter's own
-/// ticker — no platform views, no JavaScript, and no native plugins (so it
-/// builds the same on web, Windows, and an Android emulator). The flight is
-/// choreographed with `flutter_gsap` ([GTimeline] + [Gtween]): a GSAP-style
-/// timeline banks the camera, lifts altitude, burns off the dawn haze and
-/// raises the sun, while a continuously looping tween dollies the camera
-/// forward so the parallax layers — clouds, the Olympics, Mount Rainier, the
-/// downtown skyline and the Space Needle, Puget Sound, and foreground wisps —
-/// streak past at depth-scaled speeds.
-class LoginScene extends StatefulWidget {
+/// The scene is composed as a [Stack] of depth-ordered layers — sky, sun,
+/// the Olympics, Mount Rainier, the downtown skyline and Space Needle, Puget
+/// Sound, drifting clouds, and floating bokeh — and every layer is
+/// choreographed with `flutter_animate`: a staggered fade/slide/scale
+/// entrance, then ambient loops (a breathing sun, parallax cloud drift,
+/// twinkling lights, a pulsing beacon, and a shimmer across the water).
+///
+/// Pure Dart and plugin-free, so it renders identically on web, Windows, and
+/// an Android emulator.
+class LoginScene extends StatelessWidget {
   const LoginScene({super.key});
 
-  @override
-  State<LoginScene> createState() => _LoginSceneState();
-}
-
-class _LoginSceneState extends State<LoginScene>
-    with TickerProviderStateMixin {
-  // Continuous forward flight. Loops forever; its per-frame onUpdate is the
-  // single repaint pulse for the whole scene.
-  late final Gtween _flight = Gtween(
-    vsync: this,
-    duration: const Duration(seconds: 60),
-    curve: GEase.none,
-    repeat: -1,
-    onUpdate: (_) => _frame.value++,
-  );
-
-  // GSAP-style entrance choreography. Built paused, then played once.
-  late final GTimeline _intro = GTimeline(vsync: this, paused: true);
-  late final Gtween _reveal;
-  late final Gtween _lift;
-  late final Gtween _bank;
-  late final Gtween _sun;
-  late final Gtween _haze;
-
-  final ValueNotifier<int> _frame = ValueNotifier(0);
-  final ValueNotifier<Offset> _pointer = ValueNotifier(Offset.zero);
-
-  late final List<_Cloud> _clouds = _buildClouds();
-  late final List<_Streak> _streaks = _buildStreaks();
-  late final List<_Window> _windows = _buildWindows();
-
-  @override
-  void initState() {
-    super.initState();
-
-    Gtween phase(Duration d, Curve c) =>
-        Gtween(vsync: this, duration: d, curve: c, paused: true);
-
-    // The camera holds a beat, then climbs and banks into the city as the
-    // dawn haze clears and the sun lifts off the horizon.
-    _reveal = _intro.add(phase(const Duration(milliseconds: 1100), GEase.power2Out));
-    _lift = _intro.add(phase(const Duration(milliseconds: 2600), GEase.expoOut),
-        start: 0.15);
-    _bank = _intro.add(
-        phase(const Duration(milliseconds: 3200), GEase.power2InOut),
-        start: 0.2);
-    _sun = _intro.add(
-        phase(const Duration(milliseconds: 2900), GEase.power2InOut),
-        start: 0.35);
-    _haze = _intro.add(phase(const Duration(milliseconds: 2400), GEase.power2Out),
-        start: 0.6);
-
-    _intro.play();
-  }
-
-  static List<_Cloud> _buildClouds() {
-    final rng = math.Random(11);
-    return List.generate(20, (_) {
-      final depth = rng.nextDouble();
-      return _Cloud(
-        x: rng.nextDouble() * 1.4,
-        y: 0.05 + rng.nextDouble() * 0.42,
-        depth: depth,
-        scale: 0.5 + depth * 1.3,
-        puffs: 3 + rng.nextInt(3),
-        seed: rng.nextInt(1 << 20),
-      );
-    });
-  }
-
-  static List<_Streak> _buildStreaks() {
-    final rng = math.Random(29);
-    return List.generate(26, (_) {
-      final depth = 0.4 + rng.nextDouble() * 0.6; // foreground only
-      return _Streak(
-        x: rng.nextDouble(),
-        y: rng.nextDouble(),
-        depth: depth,
-        length: 0.05 + depth * 0.14,
-        phase: rng.nextDouble(),
-      );
-    });
-  }
-
-  static List<_Window> _buildWindows() {
-    final rng = math.Random(7);
-    return List.generate(54, (_) {
-      return _Window(
-        x: rng.nextDouble(),
-        y: rng.nextDouble(),
-        phase: rng.nextDouble() * math.pi * 2,
-        twinkle: rng.nextDouble() < 0.5,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _flight.kill();
-    _intro.kill();
-    _frame.dispose();
-    _pointer.dispose();
-    super.dispose();
-  }
-
-  void _updatePointer(Offset local, Size size) {
-    if (size.isEmpty) return;
-    _pointer.value = Offset(
-      (local.dx / size.width - 0.5) * 2,
-      (local.dy / size.height - 0.5) * 2,
-    );
-  }
+  /// Fraction of the height where the land/water horizon sits.
+  static const double _horizon = 0.60;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.biggest;
-        return MouseRegion(
-          onHover: (e) => _updatePointer(e.localPosition, size),
-          onExit: (_) => _pointer.value = Offset.zero,
-          child: Listener(
-            onPointerMove: (e) => _updatePointer(e.localPosition, size),
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_frame, _pointer]),
-              builder: (context, _) {
-                return CustomPaint(
-                  size: size,
-                  isComplex: true,
-                  painter: _FlightPainter(
-                    flight: _flight.progress,
-                    reveal: _reveal.progress,
-                    lift: _lift.progress,
-                    bank: _bank.progress,
-                    sun: _sun.progress,
-                    haze: _haze.progress,
-                    pointer: _pointer.value,
-                    clouds: _clouds,
-                    streaks: _streaks,
-                    windows: _windows,
-                  ),
-                );
-              },
-            ),
+        return ClipRect(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _sky(),
+              ..._stars(size),
+              _sun(size),
+              _silhouette(size, _RangePainter(),
+                  delay: 300, slide: 0.10, dur: 1500),
+              _silhouette(size, _RainierPainter(),
+                  delay: 480, slide: 0.14, dur: 1500, drift: 5),
+              ..._clouds(size, near: false),
+              _silhouette(size, _SkylinePainter(),
+                  delay: 680, slide: 0.16, dur: 1300, drift: 9),
+              _beacon(size),
+              _water(size),
+              ..._clouds(size, near: true),
+              ..._particles(size),
+              _haze(size),
+              const _Vignette(),
+            ],
           ),
         );
       },
     );
   }
+
+  // --- Sky -------------------------------------------------------------
+
+  Widget _sky() {
+    return Positioned.fill(
+      child: const DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF35508C),
+              Color(0xFF6E7FB8),
+              Color(0xFFC4AECC),
+              Color(0xFFF7D6AC),
+            ],
+            stops: [0.0, 0.4, 0.58, 0.78],
+          ),
+        ),
+      ).animate().fadeIn(duration: 800.ms),
+    );
+  }
+
+  // --- Sun -------------------------------------------------------------
+
+  Widget _sun(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w * 0.72;
+    final cy = h * _horizon * 0.74;
+    final glow = w * 1.05;
+    final core = w * 0.13;
+    final pivot = Alignment(cx / w * 2 - 1, cy / h * 2 - 1);
+
+    final group = Stack(
+      children: [
+        Positioned(
+          left: cx - glow / 2,
+          top: cy - glow / 2,
+          width: glow,
+          height: glow,
+          child: const DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [Color(0xCCFFF1DC), Color(0x00FFE2BE)],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: cx - core / 2,
+          top: cy - core / 2,
+          width: core,
+          height: core,
+          child: Container(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [Colors.white, Color(0xFFFFE6BE)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x66FFE3B0),
+                  blurRadius: 48,
+                  spreadRadius: 12,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+    return Positioned.fill(
+      child: group
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .scaleXY(
+              begin: 0.99,
+              end: 1.05,
+              duration: 5.seconds,
+              curve: Curves.easeInOut,
+              alignment: pivot)
+          .animate()
+          .fadeIn(delay: 200.ms, duration: 1600.ms)
+          .scaleXY(
+              begin: 0.7,
+              end: 1.0,
+              delay: 200.ms,
+              duration: 1600.ms,
+              curve: Curves.easeOutCubic,
+              alignment: pivot)
+          .moveY(begin: h * 0.05, end: 0, delay: 200.ms, duration: 1600.ms),
+    );
+  }
+
+  // --- Painted silhouettes (range, Rainier, skyline) -------------------
+
+  Widget _silhouette(
+    Size size,
+    CustomPainter painter, {
+    required int delay,
+    required double slide,
+    required int dur,
+    double drift = 3,
+  }) {
+    return Positioned.fill(
+      child: CustomPaint(painter: painter)
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .moveX(
+              begin: -drift,
+              end: drift,
+              duration: (16 + drift).seconds,
+              curve: Curves.easeInOut)
+          .animate()
+          .fadeIn(delay: delay.ms, duration: dur.ms)
+          .slideY(
+              begin: slide,
+              end: 0,
+              delay: delay.ms,
+              duration: dur.ms,
+              curve: Curves.easeOutCubic),
+    );
+  }
+
+  // --- Space Needle beacon --------------------------------------------
+
+  Widget _beacon(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final nx = w * 0.30;
+    final ny = (h * _horizon) - h * 0.335;
+    return Positioned(
+      left: nx - 5,
+      top: ny - 5,
+      width: 10,
+      height: 10,
+      child: Container(
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Color(0xFFFFD0CF),
+          boxShadow: [
+            BoxShadow(color: Color(0x88FF8A8A), blurRadius: 10, spreadRadius: 2),
+          ],
+        ),
+      )
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .fade(begin: 0.25, end: 1.0, duration: 1300.ms, curve: Curves.easeInOut)
+          .scaleXY(begin: 0.7, end: 1.15, duration: 1300.ms)
+          .animate()
+          .fadeIn(delay: 900.ms, duration: 800.ms),
+    );
+  }
+
+  // --- Water -----------------------------------------------------------
+
+  Widget _water(Size size) {
+    return Positioned.fill(
+      child: CustomPaint(painter: _WaterPainter(horizon: _horizon))
+          .animate()
+          .fadeIn(delay: 760.ms, duration: 1200.ms)
+          .animate(onPlay: (c) => c.repeat())
+          .shimmer(
+            delay: 1600.ms,
+            duration: 3200.ms,
+            color: Colors.white.withValues(alpha: 0.22),
+            angle: 0.2,
+          ),
+    );
+  }
+
+  // --- Haze + vignette -------------------------------------------------
+
+  Widget _haze(Size size) {
+    return Positioned.fill(
+      child: CustomPaint(painter: _HazePainter(horizon: _horizon))
+          .animate()
+          .fadeIn(delay: 700.ms, duration: 1600.ms),
+    );
+  }
+
+  // --- Stars -----------------------------------------------------------
+
+  List<Widget> _stars(Size size) {
+    final rng = math.Random(5);
+    return List.generate(10, (i) {
+      final x = rng.nextDouble() * size.width;
+      final y = rng.nextDouble() * size.height * 0.34;
+      final s = 1.5 + rng.nextDouble() * 1.8;
+      final dur = (1400 + rng.nextInt(1800)).ms;
+      return Positioned(
+        left: x,
+        top: y,
+        width: s,
+        height: s,
+        child: const DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+          ),
+        )
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .fade(begin: 0.15, end: 0.8, duration: dur, curve: Curves.easeInOut)
+            .animate()
+            .fadeIn(delay: (400 + i * 60).ms, duration: 1200.ms),
+      );
+    });
+  }
+
+  // --- Clouds ----------------------------------------------------------
+
+  List<Widget> _clouds(Size size, {required bool near}) {
+    final w = size.width;
+    final h = size.height;
+    final rng = math.Random(near ? 41 : 17);
+    final count = near ? 3 : 4;
+    return List.generate(count, (i) {
+      final depth = near ? 0.7 + rng.nextDouble() * 0.3 : rng.nextDouble() * 0.4;
+      final cw = w * (near ? 0.5 : 0.34) * (0.7 + depth);
+      final ch = cw * 0.42;
+      final y = (near ? h * 0.40 : h * 0.10) +
+          rng.nextDouble() * (near ? h * 0.16 : h * 0.20);
+      final startX = rng.nextDouble() * (w + cw) - cw / 2;
+      final travel = (near ? 70.0 : 36.0) * (0.6 + depth);
+      final dur = (near ? 26 : 44).seconds;
+      final alpha = near ? 0.22 : 0.14;
+      return Positioned(
+        left: startX,
+        top: y,
+        width: cw,
+        height: ch,
+        child: CustomPaint(painter: _CloudPainter(alpha: alpha, seed: i * 7 + 3))
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .moveX(
+                begin: -travel,
+                end: travel,
+                duration: dur,
+                curve: Curves.easeInOut)
+            .animate()
+            .fadeIn(delay: (850 + i * 120).ms, duration: 1600.ms),
+      );
+    });
+  }
+
+  // --- Floating bokeh particles ---------------------------------------
+
+  List<Widget> _particles(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final rng = math.Random(23);
+    return List.generate(16, (i) {
+      final depth = rng.nextDouble();
+      final s = 3.0 + depth * 9.0;
+      final x = rng.nextDouble() * w;
+      final y = rng.nextDouble() * h * 0.92;
+      final drift = 14 + depth * 30;
+      final dur = (3200 + rng.nextInt(3600)).ms;
+      final warm = rng.nextBool();
+      final color = warm ? const Color(0xFFFFE8C6) : const Color(0xFFDCEBFF);
+      return Positioned(
+        left: x,
+        top: y,
+        width: s,
+        height: s,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [color, color.withValues(alpha: 0.0)],
+            ),
+          ),
+        )
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .moveY(
+                begin: drift / 2,
+                end: -drift,
+                duration: dur,
+                curve: Curves.easeInOut)
+            .moveX(
+                begin: -drift * 0.3,
+                end: drift * 0.3,
+                duration: dur,
+                curve: Curves.easeInOut)
+            .fade(
+                begin: 0.15 + depth * 0.2,
+                end: 0.4 + depth * 0.5,
+                duration: dur)
+            .scaleXY(begin: 0.85, end: 1.15, duration: dur)
+            .animate()
+            .fadeIn(delay: (1000 + i * 70).ms, duration: 1400.ms),
+      );
+    });
+  }
 }
 
-class _Cloud {
-  const _Cloud({
-    required this.x,
-    required this.y,
-    required this.depth,
-    required this.scale,
-    required this.puffs,
-    required this.seed,
-  });
-  final double x;
-  final double y;
-  final double depth;
-  final double scale;
-  final int puffs;
-  final int seed;
+/// Foreground darkening so the login form sits on a richer base.
+class _Vignette extends StatelessWidget {
+  const _Vignette();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Positioned.fill(
+      child: IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment(0, -0.2),
+              radius: 1.1,
+              colors: [Color(0x00000000), Color(0x2A0A1430)],
+              stops: [0.55, 1.0],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _Streak {
-  const _Streak({
-    required this.x,
-    required this.y,
-    required this.depth,
-    required this.length,
-    required this.phase,
-  });
-  final double x;
-  final double y;
-  final double depth;
-  final double length;
-  final double phase;
-}
-
-class _Window {
-  const _Window({
-    required this.x,
-    required this.y,
-    required this.phase,
-    required this.twinkle,
-  });
-  final double x;
-  final double y;
-  final double phase;
-  final bool twinkle;
-}
-
-class _FlightPainter extends CustomPainter {
-  _FlightPainter({
-    required this.flight,
-    required this.reveal,
-    required this.lift,
-    required this.bank,
-    required this.sun,
-    required this.haze,
-    required this.pointer,
-    required this.clouds,
-    required this.streaks,
-    required this.windows,
-  });
-
-  final double flight;
-  final double reveal;
-  final double lift;
-  final double bank;
-  final double sun;
-  final double haze;
-  final Offset pointer;
-  final List<_Cloud> clouds;
-  final List<_Streak> streaks;
-  final List<_Window> windows;
-
-  // Dawn → early-morning palette.
-  static const _skyTop = Color(0xFF3E5A97);
-  static const _skyUpper = Color(0xFF7E8FC4);
-  static const _skyMauve = Color(0xFFC9B2CE);
-  static const _skyHorizon = Color(0xFFF7D6AC);
-  static const _peakFar = Color(0xFFB9C6DD);
-  static const _rainier = Color(0xFF9DB2D2);
-
-  static double _wrap(double v) => v - v.floorToDouble();
-
+class _RangePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final ang = flight * 2 * math.pi;
-
-    // Camera framing: altitude lifts the horizon, the flight bobs gently, and
-    // the banking turn rolls the whole frame a few degrees.
-    final bob = math.sin(flight * 2 * math.pi * 3) * h * 0.006;
-    final horizon = h * (0.70 - 0.05 * lift) + bob;
-    final roll = (math.sin(bank * math.pi) * 0.5 + math.sin(ang) * 0.5) * 0.035 +
-        pointer.dx * 0.012;
-
-    canvas.save();
-    // Roll + a hair of zoom so the rotated corners never expose the canvas.
-    canvas.translate(w / 2, h / 2);
-    canvas.rotate(roll);
-    canvas.scale(1.10);
-    canvas.translate(-w / 2, -h / 2 + bob * 2);
-
-    _paintSky(canvas, size, horizon);
-    _paintSun(canvas, size, horizon, ang);
-    _paintClouds(canvas, size, horizon, far: true);
-    _paintRange(canvas, size, horizon, ang);
-    _paintRainier(canvas, size, horizon, ang);
-    _paintSkyline(canvas, size, horizon, ang);
-    _paintWater(canvas, size, horizon, ang);
-    _paintClouds(canvas, size, horizon, far: false);
-    _paintStreaks(canvas, size, ang);
-    _paintHaze(canvas, size, horizon);
-
-    canvas.restore();
-
-    // Brief light wash that burns off as the scene reveals.
-    final wash = (1 - reveal);
-    if (wash > 0) {
-      canvas.drawRect(
-        Offset.zero & size,
-        Paint()..color = const Color(0xFFFBEFE0).withValues(alpha: 0.9 * wash),
-      );
+    final base = h * LoginScene._horizon;
+    const peaks = [0.0, 0.45, 0.2, 0.62, 0.34, 0.85, 0.4, 0.72, 0.22, 0.55];
+    final path = Path()..moveTo(-w * 0.15, base);
+    for (var i = 0; i < peaks.length; i++) {
+      final x = (i / (peaks.length - 1)) * w * 1.2 - w * 0.1;
+      path.lineTo(x, base - h * 0.16 * peaks[i]);
     }
-  }
-
-  void _paintSky(Canvas canvas, Size size, double horizon) {
-    final rect = Offset.zero & size;
-    // Sky warms and brightens slightly as the sun rises.
-    final top = Color.lerp(_skyTop, _skyUpper, 0.12 * sun)!;
-    canvas.drawRect(
-      rect,
+    path
+      ..lineTo(w * 1.15, base)
+      ..close();
+    canvas.drawPath(
+      path,
       Paint()
-        ..shader = LinearGradient(
+        ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [top, _skyUpper, _skyMauve, _skyHorizon],
-          stops: [0.0, 0.32, 0.5, (horizon / size.height).clamp(0.0, 1.0)],
-        ).createShader(rect),
+          colors: [Color(0xFFC2CFE4), Color(0xFF9FB1CF)],
+        ).createShader(Rect.fromLTWH(0, base - h * 0.16, w, h * 0.16))
+        ..color = const Color(0xFFB9C6DD),
     );
   }
 
-  void _paintSun(Canvas canvas, Size size, double horizon, double ang) {
-    final cx = size.width * (0.72 + pointer.dx * 0.02);
-    // Climbs off the horizon as `sun` advances.
-    final cy = horizon - size.height * (0.02 + 0.16 * sun) + math.sin(ang) * 3;
-    final glowR = size.width * (0.55 + 0.02 * math.sin(ang));
-    canvas.drawCircle(
-      Offset(cx, cy),
-      glowR,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0xFFFFF3DD).withValues(alpha: 0.85 * sun),
-            const Color(0xFFFFE2BE).withValues(alpha: 0.0),
-          ],
-        ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: glowR)),
-    );
-    canvas.drawCircle(
-      Offset(cx, cy),
-      size.width * 0.052,
-      Paint()..color = const Color(0xFFFFF7EA).withValues(alpha: 0.92 * sun),
-    );
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
-  void _paintRange(Canvas canvas, Size size, double horizon, double ang) {
+class _RainierPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    // Far Olympics: slow parallax, drift slightly with the flight.
-    final dx = -_wrap(flight * 0.12) * w * 0.4 + pointer.dx * 6;
-    const peaks = [0.0, 0.42, 0.18, 0.6, 0.32, 0.85, 0.4, 0.7, 0.2, 0.55];
-    final color = _peakFar.withValues(alpha: 0.5 * reveal);
-    for (final tile in [0.0, w * 1.0]) {
-      final path = Path()..moveTo(-w * 0.2 + dx + tile, horizon);
-      for (var i = 0; i < peaks.length; i++) {
-        final x = (i / (peaks.length - 1)) * w - w * 0.1 + dx + tile;
-        final y = horizon - h * 0.15 * peaks[i];
-        path.lineTo(x, y);
-      }
-      path
-        ..lineTo(w * 1.1 + dx + tile, horizon)
-        ..close();
-      canvas.drawPath(path, Paint()..color = color);
-    }
-  }
+    final base = h * LoginScene._horizon;
+    final cx = w * 0.5;
+    final peakY = base - h * 0.42;
 
-  void _paintRainier(Canvas canvas, Size size, double horizon, double ang) {
-    final e = reveal;
-    if (e <= 0) return;
-    final w = size.width;
-    final h = size.height;
-    // Medium-slow parallax: Rainier drifts grandly across the frame.
-    final dx = (0.5 - _wrap(flight * 0.18 + 0.3)) * w * 1.6 + pointer.dx * 12;
-    final cx = w * 0.5 + dx;
-    final baseY = horizon;
-    final peakY = baseY - h * 0.42;
-    final base = Path()
-      ..moveTo(cx - w * 0.42, baseY)
+    final body = Path()
+      ..moveTo(cx - w * 0.44, base)
       ..lineTo(cx, peakY)
-      ..lineTo(cx + w * 0.42, baseY)
+      ..lineTo(cx + w * 0.44, base)
       ..close();
-    canvas.drawPath(base, Paint()..color = _rainier.withValues(alpha: e));
+    canvas.drawPath(
+      body,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFA9BCD9), Color(0xFF8AA0C4)],
+        ).createShader(Rect.fromLTWH(cx - w * 0.44, peakY, w * 0.88, h * 0.42)),
+    );
 
-    // Snow cap with a faint alpenglow tint that warms with the sun.
+    // Alpenglow snow cap.
     final snow = Path()
-      ..moveTo(cx - w * 0.12, baseY - h * 0.30)
+      ..moveTo(cx - w * 0.13, base - h * 0.30)
       ..lineTo(cx, peakY)
-      ..lineTo(cx + w * 0.12, baseY - h * 0.30)
-      ..lineTo(cx + w * 0.05, baseY - h * 0.265)
-      ..lineTo(cx - w * 0.01, baseY - h * 0.30)
-      ..lineTo(cx - w * 0.06, baseY - h * 0.27)
+      ..lineTo(cx + w * 0.13, base - h * 0.30)
+      ..lineTo(cx + w * 0.05, base - h * 0.265)
+      ..lineTo(cx - w * 0.01, base - h * 0.30)
+      ..lineTo(cx - w * 0.06, base - h * 0.27)
       ..close();
     canvas.drawPath(
       snow,
       Paint()
-        ..shader = LinearGradient(
+        ..shader = const LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: [
-            Color.lerp(const Color(0xFFEFE2EA), const Color(0xFFFCEBE2), sun)!
-                .withValues(alpha: e),
-            const Color(0xFFE0CCD6).withValues(alpha: e),
-          ],
+          colors: [Color(0xFFFDEEE6), Color(0xFFEAD4DC)],
         ).createShader(
-            Rect.fromLTWH(cx - w * 0.12, peakY, w * 0.24, h * 0.30)),
+            Rect.fromLTWH(cx - w * 0.13, peakY, w * 0.26, h * 0.30)),
     );
   }
 
-  void _paintSkyline(Canvas canvas, Size size, double horizon, double ang) {
-    final e = reveal;
-    if (e <= 0) return;
-    final w = size.width;
-    // Faster parallax than the mountains; the downtown cluster slides past and
-    // wraps so the city keeps coming as we fly.
-    final base = -_wrap(flight * 0.5) * w * 1.5 + pointer.dx * 16;
-    for (final tile in [0.0, w * 1.5]) {
-      _paintDowntown(canvas, size, horizon, ang, base + tile);
-    }
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
-  void _paintDowntown(
-      Canvas canvas, Size size, double horizon, double ang, double originX) {
+class _SkylinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final color = const Color(0xFF374264).withValues(alpha: reveal);
+    final base = h * LoginScene._horizon;
+    final fill = Paint()..color = const Color(0xFF2C3656);
 
-    // Downtown towers.
     const towers = <List<double>>[
       [0.46, 0.10], [0.52, 0.16], [0.57, 0.22], [0.63, 0.13],
       [0.69, 0.19], [0.75, 0.11], [0.81, 0.17], [0.87, 0.09],
     ];
     for (final t in towers) {
-      final cx = w * t[0] + originX;
+      final cx = w * t[0];
       final th = h * t[1];
       const tw = 0.045;
       canvas.drawRRect(
         RRect.fromRectAndCorners(
-          Rect.fromLTWH(cx - w * tw / 2, horizon - th, w * tw, th),
+          Rect.fromLTWH(cx - w * tw / 2, base - th, w * tw, th),
           topLeft: const Radius.circular(2),
           topRight: const Radius.circular(2),
         ),
-        Paint()..color = color,
+        fill,
       );
     }
 
     // Space Needle.
-    final nx = w * 0.30 + originX;
-    final needleTop = horizon - h * 0.30;
-    final paintN = Paint()..color = color;
+    final nx = w * 0.30;
+    final needleTop = base - h * 0.30;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(nx - w * 0.007, needleTop, w * 0.014, h * 0.30),
         const Radius.circular(2),
       ),
-      paintN,
+      fill,
     );
     canvas.drawPath(
       Path()
@@ -449,146 +493,84 @@ class _FlightPainter extends CustomPainter {
         ..lineTo(nx + w * 0.03, needleTop + h * 0.04)
         ..lineTo(nx - w * 0.03, needleTop + h * 0.04)
         ..close(),
-      paintN,
+      fill,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-            nx - w * 0.002, needleTop - h * 0.035, w * 0.004, h * 0.035),
+        Rect.fromLTWH(nx - w * 0.002, needleTop - h * 0.035, w * 0.004,
+            h * 0.035),
         const Radius.circular(1),
       ),
-      paintN,
-    );
-    final beacon = (0.5 + 0.5 * math.sin(ang * 6)).clamp(0.0, 1.0);
-    canvas.drawCircle(
-      Offset(nx, needleTop - h * 0.035),
-      2.8,
-      Paint()
-        ..color = const Color(0xFFFFC9C9).withValues(alpha: reveal * beacon),
+      fill,
     );
 
-    // Twinkling windows across the towers.
+    // Warm windows.
+    final rng = math.Random(7);
     final wpaint = Paint();
-    for (final win in windows) {
-      final wx = w * 0.44 + win.x * w * 0.46 + originX;
-      final wy = horizon - h * (0.02 + win.y * 0.18);
-      if (wy > horizon - 4) continue;
-      final tw = win.twinkle
-          ? 0.45 + 0.55 * (0.5 + 0.5 * math.sin(ang * 4 + win.phase))
-          : 0.82;
+    for (var i = 0; i < 60; i++) {
+      final wx = w * (0.44 + rng.nextDouble() * 0.46);
+      final wy = base - h * (0.02 + rng.nextDouble() * 0.17);
       wpaint.color =
-          const Color(0xFFFFD9A0).withValues(alpha: reveal * tw * 0.9);
+          const Color(0xFFFFD79C).withValues(alpha: 0.5 + rng.nextDouble() * 0.4);
       canvas.drawRect(
-        Rect.fromCenter(center: Offset(wx, wy), width: 2.2, height: 2.6),
+        Rect.fromCenter(center: Offset(wx, wy), width: 2.0, height: 2.4),
         wpaint,
       );
     }
   }
 
-  void _paintWater(Canvas canvas, Size size, double horizon, double ang) {
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _WaterPainter extends CustomPainter {
+  _WaterPainter({required this.horizon});
+  final double horizon;
+
+  @override
+  void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final rect = Rect.fromLTWH(0, horizon, w, h - horizon);
+    final top = h * horizon;
+    final rect = Rect.fromLTWH(0, top, w, h - top);
     canvas.drawRect(
       rect,
       Paint()
-        ..shader = LinearGradient(
+        ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: const [
-            Color(0xFFB7CCDD),
-            Color(0xFF9DB9D1),
-            Color(0xFF7C9DBC),
-          ],
+          colors: [Color(0xFFB7CCDD), Color(0xFF9DB9D1), Color(0xFF6F92B4)],
         ).createShader(rect),
     );
-    // Reflected warmth from the sun.
+    // Warm reflection beneath the sun.
+    final refl = Rect.fromLTWH(w * 0.56, top, w * 0.32, (h - top) * 0.75);
     canvas.drawRect(
-      Rect.fromLTWH(w * 0.55, horizon, w * 0.34, (h - horizon) * 0.7),
+      refl,
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            const Color(0xFFFFE6C4).withValues(alpha: 0.28 * sun),
+            const Color(0xFFFFE6C4).withValues(alpha: 0.32),
             const Color(0xFFFFE6C4).withValues(alpha: 0.0),
           ],
-        ).createShader(
-            Rect.fromLTWH(w * 0.55, horizon, w * 0.34, (h - horizon) * 0.7)),
+        ).createShader(refl),
     );
-    // Shimmer bands that race by faster nearer the camera (flight cue).
-    for (var i = 0; i < 7; i++) {
-      final p = i / 7;
-      final y = horizon + (h - horizon) * (0.06 + p * 0.86);
-      final speed = 0.3 + p * 1.6;
-      final cx = _wrap(0.2 + p * 0.5 + flight * speed) * w * 1.4 - w * 0.2;
-      final lw = w * (0.16 + 0.14 * p);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(center: Offset(cx, y), width: lw, height: 2),
-          const Radius.circular(1),
-        ),
-        Paint()..color = Colors.white.withValues(alpha: (0.08 + 0.10 * p) * reveal),
-      );
-    }
   }
 
-  void _paintClouds(Canvas canvas, Size size, double horizon,
-      {required bool far}) {
-    final w = size.width;
-    final paint = Paint()
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-    for (final c in clouds) {
-      final isFar = c.depth < 0.5;
-      if (isFar != far) continue;
-      // Speed scales with nearness → parallax depth.
-      final speed = 0.1 + c.depth * 1.4;
-      final x = (_wrap(c.x / 1.4 - flight * speed)) * w * 1.4 - w * 0.2;
-      final y = c.y * (horizon * 0.92) + math.sin(flight * 6 + c.seed) * 3;
-      final rng = math.Random(c.seed);
-      final base = 22.0 * c.scale;
-      final alpha = (far ? 0.12 : 0.18) * (0.5 + c.depth) * reveal;
-      paint.color = Colors.white.withValues(alpha: alpha.clamp(0.0, 0.35));
-      for (var p = 0; p < c.puffs; p++) {
-        final ox = (rng.nextDouble() - 0.5) * base * 2.4;
-        final oy = (rng.nextDouble() - 0.5) * base * 0.7;
-        final r = base * (0.6 + rng.nextDouble() * 0.7);
-        canvas.drawCircle(Offset(x + ox, y + oy), r, paint);
-      }
-    }
-  }
+  @override
+  bool shouldRepaint(covariant _WaterPainter oldDelegate) => false;
+}
 
-  void _paintStreaks(Canvas canvas, Size size, double ang) {
-    if (reveal <= 0) return;
+class _HazePainter extends CustomPainter {
+  _HazePainter({required this.horizon});
+  final double horizon;
+
+  @override
+  void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final paint = Paint()
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.2);
-    for (final s in streaks) {
-      // Foreground wisps tear across fast and fan outward toward the edges,
-      // selling the sense of speed past the camera.
-      final speed = 0.8 + s.depth * 2.2;
-      final t = _wrap(s.x + s.phase - flight * speed);
-      final spread = (s.y - 0.5) * 2; // -1 top .. 1 bottom
-      final x = t * w * 1.3 - w * 0.15;
-      final y = s.y * h + math.sin(ang + s.phase * 6) * 4 + spread * 8;
-      final len = w * s.length * (0.6 + 0.8 * t);
-      paint
-        ..strokeWidth = 1.0 + s.depth * 1.6
-        ..color = Colors.white
-            .withValues(alpha: (0.05 + 0.16 * s.depth) * reveal * (0.4 + t));
-      canvas.drawLine(Offset(x, y), Offset(x + len, y + spread * 3), paint);
-    }
-  }
-
-  void _paintHaze(Canvas canvas, Size size, double horizon) {
-    // Morning haze along the horizon that burns off as `haze` advances.
-    final amount = (1 - haze);
-    if (amount <= 0.01) return;
-    final w = size.width;
-    final h = size.height;
-    final band = Rect.fromLTWH(0, horizon - h * 0.12, w, h * 0.22);
+    final band = Rect.fromLTWH(0, h * horizon - h * 0.10, w, h * 0.20);
     canvas.drawRect(
       band,
       Paint()
@@ -597,21 +579,39 @@ class _FlightPainter extends CustomPainter {
           end: Alignment.bottomCenter,
           colors: [
             Colors.white.withValues(alpha: 0.0),
-            Colors.white.withValues(alpha: 0.5 * amount),
+            Colors.white.withValues(alpha: 0.34),
             Colors.white.withValues(alpha: 0.0),
           ],
         ).createShader(band)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
     );
   }
 
   @override
-  bool shouldRepaint(covariant _FlightPainter old) =>
-      old.flight != flight ||
-      old.reveal != reveal ||
-      old.lift != lift ||
-      old.bank != bank ||
-      old.sun != sun ||
-      old.haze != haze ||
-      old.pointer != pointer;
+  bool shouldRepaint(covariant _HazePainter oldDelegate) => false;
+}
+
+class _CloudPainter extends CustomPainter {
+  _CloudPainter({required this.alpha, required this.seed});
+  final double alpha;
+  final int seed;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rng = math.Random(seed);
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: alpha)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    final cy = size.height * 0.6;
+    final puffs = 4 + rng.nextInt(3);
+    for (var i = 0; i < puffs; i++) {
+      final px = size.width * (0.12 + 0.76 * (i / (puffs - 1)));
+      final py = cy + (rng.nextDouble() - 0.5) * size.height * 0.4;
+      final r = size.height * (0.4 + rng.nextDouble() * 0.45);
+      canvas.drawCircle(Offset(px, py), r, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CloudPainter oldDelegate) => false;
 }

@@ -112,10 +112,15 @@ void main() {
         builder: deviceFrameBuilder,
         home: entry.value,
       ));
-      // Advance past the entrance/cascade animations with fixed pumps;
+      // Advance past the entrance/cascade animations with stepped pumps;
       // the welcome backdrop loops forever, so pumpAndSettle would hang.
+      // flutter_animate starts its controllers on a post-frame callback and
+      // only advances on subsequent frames, so step the clock in small
+      // increments instead of one big jump (which would freeze it at t=0).
       await tester.pump();
-      await tester.pump(const Duration(seconds: 2));
+      for (var i = 0; i < 45; i++) {
+        await tester.pump(const Duration(milliseconds: 60));
+      }
       await expectLater(
         find.byType(MaterialApp),
         matchesGoldenFile('../docs/screenshots/${entry.key}.png'),
