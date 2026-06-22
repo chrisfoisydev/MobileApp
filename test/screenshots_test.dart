@@ -17,6 +17,7 @@ import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
 import 'package:mobile_app/screens/credit_card_detail_screen.dart';
+import 'package:mobile_app/screens/make_payment_screen.dart';
 import 'package:mobile_app/screens/more_screen.dart';
 import 'package:mobile_app/screens/move_money_screen.dart';
 import 'package:mobile_app/screens/my_profile_screen.dart';
@@ -75,6 +76,34 @@ void main() {
       dateLabel: 'June 14, 2026',
     ),
     'move_money': const MoveMoneyScreen(),
+    'payment_to': const MakePaymentScreen(),
+    'payment_amount': MakePaymentScreen(
+      initialStep: 2,
+      initialToAccount: visaCreditCard,
+      initialFromAccount: jointChecking,
+    ),
+    'payment_amount_other': MakePaymentScreen(
+      initialStep: 2,
+      initialToAccount: visaCreditCard,
+      initialFromAccount: jointChecking,
+      initialOption: 3,
+      initialOtherCents: 50000,
+      initialKeypadOpen: true,
+    ),
+    'payment_date': MakePaymentScreen(
+      initialStep: 3,
+      initialToAccount: visaCreditCard,
+      initialFromAccount: jointChecking,
+      initialOption: 0,
+      initialSelectedDay: 14,
+    ),
+    'payment_review': MakePaymentScreen(
+      initialStep: 4,
+      initialToAccount: visaCreditCard,
+      initialFromAccount: jointChecking,
+      initialOption: 0,
+      initialSelectedDay: 14,
+    ),
     'transfer': const TransferScreen(),
     'transfer_from': TransferScreen(
       initialStep: 1,

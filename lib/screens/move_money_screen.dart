@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/account_tab_bar.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../widgets/surface_card.dart';
+import 'make_payment_screen.dart';
 import 'more_screen.dart';
 import 'transfer_screen.dart';
 
@@ -110,7 +111,9 @@ class _MoveMoneyScreenState extends State<MoveMoneyScreen> {
           icon: Icons.receipt_long,
           title: 'Make a Payment',
           subtitle: 'Pay loans, credit cards & more',
-          onTap: () => _notice('Make a Payment'),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const MakePaymentScreen()),
+          ),
         ),
         const SizedBox(height: 10),
         _MenuTile(

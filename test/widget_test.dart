@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
+import 'package:mobile_app/screens/make_payment_screen.dart';
 import 'package:mobile_app/screens/more_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
 import 'package:mobile_app/screens/transfer_screen.dart';
@@ -254,6 +255,64 @@ void main() {
     expect(find.text('Success!'), findsOneWidget);
     expect(find.text('Done'), findsOneWidget);
     expect(find.text('Sending On'), findsOneWidget);
+  });
+
+  testWidgets('Make a Payment picks a card, source, and preset amount',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: MakePaymentScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Where is the money going?'), findsOneWidget);
+    // The credit card payee shows a minimum-payment reminder.
+    expect(find.text('Credit Card ...2903'), findsOneWidget);
+    expect(find.textContaining('Minimum payment of'), findsOneWidget);
+
+    await tester.tap(find.text('Credit Card ...2903'));
+    await tester.pumpAndSettle();
+    expect(find.text('Where is the money from?'), findsOneWidget);
+
+    await tester.tap(find.text('Joint Checking ...4567'));
+    await tester.pumpAndSettle();
+
+    // Amount step exposes the preset payment options.
+    expect(find.textContaining('How much would you like to pay'),
+        findsOneWidget);
+    expect(find.text('Statement Balance'), findsOneWidget);
+    expect(find.text('Minimum Payment'), findsOneWidget);
+    expect(find.text('Current Balance'), findsOneWidget);
+
+    await tester.tap(find.text('Current Balance'));
+    await tester.pumpAndSettle();
+
+    final continueBtn = find.text('Continue');
+    await tester.scrollUntilVisible(continueBtn, 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(continueBtn);
+    await tester.pumpAndSettle();
+
+    // Date step shows the payment-due reminder.
+    expect(find.textContaining('When do you want to pay'), findsOneWidget);
+    expect(find.textContaining('Payment Due'), findsOneWidget);
+  });
+
+  testWidgets('confirming a payment shows the success screen',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: MakePaymentScreen(
+        initialStep: 4,
+        initialToAccount: visaCreditCard,
+        initialFromAccount: jointChecking,
+        initialOption: 0,
+        initialSelectedDay: 14,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Confirm'), findsOneWidget);
+    await tester.tap(find.text('Confirm'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('Success!'), findsOneWidget);
   });
 
   testWidgets('More tab offers the payment success animation',

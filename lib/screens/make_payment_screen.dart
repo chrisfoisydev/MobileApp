@@ -5,54 +5,59 @@ import '../data/formatting.dart';
 import '../data/mock_data.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
-import '../widgets/becu_logo.dart';
 import '../widgets/detail_row.dart';
-import 'payment_success_screen.dart';
 import '../widgets/payment_flow_widgets.dart';
 import '../widgets/surface_card.dart';
+import 'payment_success_screen.dart';
 
-/// Transfer flow with four steps tracked across the top:
-/// To → From → Amount → Date. Each selection is recorded under its step
-/// in the tracker and carried into the next.
-class TransferScreen extends StatefulWidget {
-  const TransferScreen({
+/// A payment option on the Amount step (a preset balance or "Other Amount").
+class _PayOption {
+  const _PayOption(this.label, this.subtitle, this.cents);
+  final String label;
+  final String subtitle;
+
+  /// Fixed amount in cents; null means "Other Amount" (typed via the keypad).
+  final int? cents;
+}
+
+/// Make a Payment flow: To → From → Amount → Date, then a review. Mirrors the
+/// transfer stepper but lets you pay a preset balance (statement / minimum /
+/// current) on a credit card, and surfaces the payment due date.
+class MakePaymentScreen extends StatefulWidget {
+  const MakePaymentScreen({
     super.key,
     this.initialStep = 0,
     this.initialToAccount,
     this.initialFromAccount,
-    this.initialAmountCents = 0,
+    this.initialOption,
+    this.initialOtherCents = 0,
     this.initialSelectedDay,
-    this.initialNote = '',
     this.initialKeypadOpen = false,
   });
 
   final int initialStep;
   final Account? initialToAccount;
   final Account? initialFromAccount;
-  final int initialAmountCents;
+  final int? initialOption;
+  final int initialOtherCents;
   final int? initialSelectedDay;
-  final String initialNote;
   final bool initialKeypadOpen;
 
   @override
-  State<TransferScreen> createState() => _TransferScreenState();
+  State<MakePaymentScreen> createState() => _MakePaymentScreenState();
 }
 
-class _TransferScreenState extends State<TransferScreen> {
+class _MakePaymentScreenState extends State<MakePaymentScreen> {
   late int _step = widget.initialStep;
-  // Direction of the last step change; drives the slide direction of the
-  // animated transition between steps.
   bool _forward = true;
   late Account? _toAccount = widget.initialToAccount;
   late Account? _fromAccount = widget.initialFromAccount;
-  late int _amountCents = widget.initialAmountCents;
+  late int? _selectedOption = widget.initialOption;
+  late int _otherCents = widget.initialOtherCents;
   late int? _selectedDay = widget.initialSelectedDay;
   late bool _keypadVisible = widget.initialKeypadOpen;
   final FocusNode _amountFocus = FocusNode();
-  late final TextEditingController _noteController =
-      TextEditingController(text: widget.initialNote);
 
-  /// Fixed "today" marker shown as an open circle on the calendar.
   static const _todayDay = 8;
 
   bool _becuExpanded = true;
@@ -61,13 +66,7 @@ class _TransferScreenState extends State<TransferScreen> {
   @override
   void dispose() {
     _amountFocus.dispose();
-    _noteController.dispose();
     super.dispose();
-  }
-
-  void _openKeypad() {
-    setState(() => _keypadVisible = true);
-    _amountFocus.requestFocus();
   }
 
   void _notice(String feature) {
@@ -78,8 +77,6 @@ class _TransferScreenState extends State<TransferScreen> {
       );
   }
 
-  /// Moves to [next], recording the direction so the body transition slides
-  /// the right way (forward → in from the right, back → in from the left).
   void _goToStep(int next) => setState(() {
         _forward = next >= _step;
         _step = next;
@@ -87,6 +84,7 @@ class _TransferScreenState extends State<TransferScreen> {
 
   void _selectTo(Account account) {
     _toAccount = account;
+    _selectedOption = null;
     _goToStep(1);
   }
 
@@ -95,15 +93,72 @@ class _TransferScreenState extends State<TransferScreen> {
     _goToStep(2);
   }
 
-  void _tapDigit(int d) => setState(() {
-        _amountCents = (_amountCents * 10 + d).clamp(0, 99999999);
-      });
+  // --- Amount options ---------------------------------------------------
 
-  void _backspace() => setState(() => _amountCents ~/= 10);
+  List<_PayOption> _options() {
+    final to = _toAccount;
+    if (to == null) return const [];
+    final current = (to.availableBalance * 100).round();
+    if (to.kind == AccountKind.creditCard) {
+      final statement = (to.postedBalance * 100).round();
+      final minDue = to.creditInfo?.minimumPaymentDue ?? 0;
+      final minCents = minDue > 0
+          ? (minDue * 100).round()
+          : (to.availableBalance * 0.02 * 100).round().clamp(2500, current);
+      return [
+        _PayOption(
+          'Statement Balance',
+          'Avoid late charges on purchases included in your last statement.',
+          statement,
+        ),
+        _PayOption(
+          'Minimum Payment',
+          'Avoid late fees. You may continue to accrue interest.',
+          minCents,
+        ),
+        _PayOption(
+          'Current Balance',
+          'Pay your balance in full. Your ${to.nickname} balance will be '
+              '\$0.00.',
+          current,
+        ),
+        const _PayOption('Other Amount', '', null),
+      ];
+    }
+    return [
+      _PayOption('Current Balance', 'Pay your remaining balance.', current),
+      const _PayOption('Other Amount', '', null),
+    ];
+  }
 
-  /// Lets a physical keyboard (web/desktop) drive the amount alongside the
-  /// on-screen keypad.
+  int get _amountCents {
+    final opts = _options();
+    final sel = _selectedOption;
+    if (sel == null || sel >= opts.length) return 0;
+    return opts[sel].cents ?? _otherCents;
+  }
+
+  bool get _optionIsOther {
+    final opts = _options();
+    final sel = _selectedOption;
+    return sel != null && sel < opts.length && opts[sel].cents == null;
+  }
+
+  void _selectOption(int i) {
+    setState(() {
+      _selectedOption = i;
+      _keypadVisible = _options()[i].cents == null;
+    });
+    if (_keypadVisible) _amountFocus.requestFocus();
+  }
+
+  void _tapDigit(int d) =>
+      setState(() => _otherCents = (_otherCents * 10 + d).clamp(0, 99999999));
+
+  void _backspace() => setState(() => _otherCents ~/= 10);
+
   KeyEventResult _handleAmountKey(FocusNode node, KeyEvent event) {
+    if (!_optionIsOther) return KeyEventResult.ignored;
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
@@ -122,6 +177,27 @@ class _TransferScreenState extends State<TransferScreen> {
     return KeyEventResult.ignored;
   }
 
+  // --- Due date ---------------------------------------------------------
+
+  static const _months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  ({String label, int? juneDay}) get _due {
+    final raw = _toAccount?.creditInfo?.nextPaymentDue; // MM/DD/YYYY
+    if (raw == null) return (label: 'the due date', juneDay: null);
+    final parts = raw.split('/');
+    if (parts.length != 3) return (label: raw, juneDay: null);
+    final m = int.tryParse(parts[0]) ?? 1;
+    final d = int.tryParse(parts[1]) ?? 1;
+    final y = parts[2];
+    return (
+      label: '${_months[(m - 1).clamp(0, 11)]} $d, $y',
+      juneDay: m == 6 ? d : null,
+    );
+  }
+
   void _back() {
     if (_step > 0) {
       _goToStep(_step - 1);
@@ -129,10 +205,6 @@ class _TransferScreenState extends State<TransferScreen> {
       Navigator.of(context).maybePop();
     }
   }
-
-  void _toReview() => _goToStep(4);
-
-  void _editStep(int step) => _goToStep(step);
 
   void _confirm() {
     Navigator.of(context).push(
@@ -142,7 +214,6 @@ class _TransferScreenState extends State<TransferScreen> {
           fromLabel: _fromAccount?.displayName ?? '',
           toLabel: _toAccount?.displayName ?? '',
           dateLabel: 'June ${_selectedDay ?? _todayDay}, 2026',
-          // Done returns all the way to wherever the transfer was launched.
           onDone: () =>
               Navigator.of(context).popUntil((route) => route.isFirst),
         ),
@@ -153,9 +224,9 @@ class _TransferScreenState extends State<TransferScreen> {
   String get _title => switch (_step) {
         0 => 'Where is the money going?',
         1 => 'Where is the money from?',
-        2 => 'How much would you like to transfer to '
-            '${_toAccount?.nickname ?? 'your account'}?',
-        3 => 'Almost done, John!\nWhen do you want to transfer?',
+        2 => 'How much would you like to pay on your '
+            '${_toAccount?.nickname ?? 'account'}?',
+        3 => 'Almost done, John!\nWhen do you want to pay?',
         _ => "Let's confirm everything looks good to you.",
       };
 
@@ -222,7 +293,7 @@ class _TransferScreenState extends State<TransferScreen> {
                   if (showSubtitle) ...[
                     const SizedBox(height: 4),
                     const Text(
-                      "Let's get the details for your transfer",
+                      "Let's get the details for your payment",
                       style: TextStyle(fontSize: 16, color: AppColors.navy),
                     ),
                   ],
@@ -232,7 +303,9 @@ class _TransferScreenState extends State<TransferScreen> {
                     subLabels: [
                       _toAccount?.displayName,
                       _fromAccount?.displayName,
-                      _step >= 3 ? formatCurrency(_amountCents / 100) : null,
+                      _step >= 3 && _amountCents > 0
+                          ? formatCurrency(_amountCents / 100)
+                          : null,
                       _step >= 4 && _selectedDay != null
                           ? 'June $_selectedDay, 2026'
                           : null,
@@ -254,9 +327,6 @@ class _TransferScreenState extends State<TransferScreen> {
                 switchInCurve: Curves.easeOutCubic,
                 switchOutCurve: Curves.easeInCubic,
                 transitionBuilder: (child, animation) {
-                  // Incoming step slides toward center; on the way out a step
-                  // slides off the opposite edge (animation runs in reverse),
-                  // so the two read as one continuous push.
                   final slide = _forward
                       ? const Offset(0.08, 0)
                       : const Offset(-0.08, 0);
@@ -295,6 +365,7 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 
   Widget _buildToList() {
+    final payees = [...creditCards, ...loans];
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
@@ -304,8 +375,16 @@ class _TransferScreenState extends State<TransferScreen> {
           onToggle: () => setState(() => _becuExpanded = !_becuExpanded),
         ),
         if (_becuExpanded)
-          for (final account in checkingAndSavings)
-            FlowAccountCard(account: account, onTap: () => _selectTo(account)),
+          for (final account in payees)
+            FlowAccountCard(
+              account: account,
+              note: account.kind == AccountKind.creditCard
+                  ? 'Minimum payment of '
+                      '${formatCurrency(_minFor(account))} is due '
+                      '${_dueFor(account)}.'
+                  : null,
+              onTap: () => _selectTo(account),
+            ),
         const SizedBox(height: 4),
         FlowSectionHeader(
           title: 'My External Accounts',
@@ -316,49 +395,33 @@ class _TransferScreenState extends State<TransferScreen> {
         if (_externalExpanded) ...[
           FlowExternalCard(
             name: 'Chase Checking ...9534',
-            onTap: () => _notice('External transfers'),
+            onTap: () => _notice('External payees'),
           ),
           FlowExternalCard(
             name: 'Chase Savings ...0012',
-            onTap: () => _notice('External transfers'),
+            onTap: () => _notice('External payees'),
           ),
         ],
-        const SizedBox(height: 4),
-        const FlowSectionHeader(title: 'People & Organizations'),
-        SurfaceCard(
-          onTap: () => _notice('Adding a recipient'),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Icon(Icons.north_east, color: AppColors.slate, size: 20),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Send money to a Person or Organization',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Get started by providing their account information',
-                      style: TextStyle(fontSize: 13, color: AppColors.slate),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
 
+  double _minFor(Account a) {
+    final due = a.creditInfo?.minimumPaymentDue ?? 0;
+    if (due > 0) return due;
+    return (a.availableBalance * 0.02).clamp(25, a.availableBalance);
+  }
+
+  String _dueFor(Account a) {
+    final raw = a.creditInfo?.nextPaymentDue;
+    if (raw == null) return 'soon';
+    final p = raw.split('/');
+    if (p.length != 3) return raw;
+    final m = int.tryParse(p[0]) ?? 1;
+    return '${_months[(m - 1).clamp(0, 11)]} ${int.tryParse(p[1]) ?? 1}';
+  }
+
   Widget _buildFromList() {
-    final fromAccounts =
-        checkingAndSavings.where((a) => a.last4 != _toAccount?.last4).toList();
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
@@ -370,7 +433,7 @@ class _TransferScreenState extends State<TransferScreen> {
           onToggle: () => setState(() => _becuExpanded = !_becuExpanded),
         ),
         if (_becuExpanded)
-          for (final account in fromAccounts)
+          for (final account in checkingAndSavings)
             FlowAccountCard(
               account: account,
               onTap: () => _selectFrom(account),
@@ -380,104 +443,52 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 
   Widget _buildAmountStep() {
-    final from = _fromAccount;
+    final opts = _options();
     return Focus(
       focusNode: _amountFocus,
       onKeyEvent: _handleAmountKey,
       child: Column(
         children: [
           Expanded(
-            child: SingleChildScrollView(
+            child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Available to transfer from account',
-                    style: TextStyle(fontSize: 12, color: AppColors.slate),
+              children: [
+                for (var i = 0; i < opts.length; i++) ...[
+                  _OptionCard(
+                    option: opts[i],
+                    selected: _selectedOption == i,
+                    otherCents: _otherCents,
+                    onTap: () => _selectOption(i),
                   ),
-                  const SizedBox(height: 8),
-                  if (from != null)
-                    SurfaceCard(
-                      elevated: false,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      child: Row(
-                        children: [
-                          const BecuBadge(),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(from.displayName,
-                                style: const TextStyle(fontSize: 16)),
-                          ),
-                          Text(
-                            formatCurrency(from.availableBalance),
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Enter Amount',
-                    style: TextStyle(fontSize: 12, color: AppColors.slate),
-                  ),
-                  const SizedBox(height: 8),
-                  SurfaceCard(
-                    onTap: _openKeypad,
-                    padding: const EdgeInsets.symmetric(vertical: 36),
-                    child: Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8, right: 4),
-                            child: Text('\$',
-                                style: TextStyle(
-                                    fontSize: 26, color: AppColors.navy)),
-                          ),
-                          Text(
-                            formatCurrency(_amountCents / 100).substring(1),
-                            style: const TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.navy,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: _amountCents > 0 ? () => _goToStep(3) : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.teal,
-                        disabledBackgroundColor: AppColors.monthBar,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 12),
                 ],
-              ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _amountCents > 0 ? () => _goToStep(3) : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.teal,
+                      disabledBackgroundColor: AppColors.monthBar,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continue',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          if (_keypadVisible)
+          if (_optionIsOther && _keypadVisible)
             FlowKeypad(onDigit: _tapDigit, onBackspace: _backspace),
         ],
       ),
@@ -485,44 +496,43 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 
   Widget _buildDateStep() {
+    final due = _due;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAF4F6),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline, size: 20, color: AppColors.teal),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Payment Due: ${due.label}.',
+                  style: const TextStyle(fontSize: 14, color: AppColors.navy),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         FlowCalendarCard(
           todayDay: _todayDay,
           selectedDay: _selectedDay,
+          dueDay: due.juneDay,
           onSelect: (day) => setState(() => _selectedDay = day),
           onMonthChange: () => _notice('Changing the month'),
-        ),
-        const SizedBox(height: 16),
-        const Text('Note (Optional)',
-            style: TextStyle(fontSize: 12, color: AppColors.slate)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _noteController,
-          decoration: InputDecoration(
-            hintText: 'What is this for?',
-            hintStyle: const TextStyle(color: AppColors.slate),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.fieldBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.teal, width: 2),
-            ),
-          ),
         ),
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: _selectedDay != null ? _toReview : null,
+            onPressed: _selectedDay != null ? () => _goToStep(4) : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.teal,
               disabledBackgroundColor: AppColors.monthBar,
@@ -546,7 +556,7 @@ class _TransferScreenState extends State<TransferScreen> {
 
   Widget _buildReviewStep() {
     Widget editIcon(int step) => InkWell(
-          onTap: () => _editStep(step),
+          onTap: () => _goToStep(step),
           customBorder: const CircleBorder(),
           child: const Padding(
             padding: EdgeInsets.all(4),
@@ -583,13 +593,6 @@ class _TransferScreenState extends State<TransferScreen> {
                       label: 'Date',
                       value: 'June ${_selectedDay ?? _todayDay}, 2026',
                       trailing: editIcon(3),
-                    ),
-                    DetailRow(
-                      label: 'Note',
-                      value: _noteController.text.isEmpty
-                          ? 'None'
-                          : _noteController.text,
-                      trailing: editIcon(3),
                       showDivider: false,
                     ),
                   ],
@@ -597,7 +600,7 @@ class _TransferScreenState extends State<TransferScreen> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Funds are typically available in 1–2 business days.',
+                'Payments are typically posted in 1–2 business days.',
                 style: TextStyle(fontSize: 13, color: AppColors.slate),
               ),
             ],
@@ -631,6 +634,127 @@ class _TransferScreenState extends State<TransferScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _OptionCard extends StatelessWidget {
+  const _OptionCard({
+    required this.option,
+    required this.selected,
+    required this.otherCents,
+    required this.onTap,
+  });
+
+  final _PayOption option;
+  final bool selected;
+  final int otherCents;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isOther = option.cents == null;
+    return SurfaceCard(
+      onTap: onTap,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  option.label,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                if (isOther)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(
+                        color: selected ? AppColors.teal : AppColors.fieldBorder,
+                        width: selected ? 2 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text('\$', style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 4),
+                        Text(
+                          formatCurrency(otherCents / 100).substring(1),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: otherCents > 0
+                                ? AppColors.navy
+                                : AppColors.slate,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else ...[
+                  Text(
+                    formatCurrency(option.cents! / 100),
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.w800),
+                  ),
+                  if (option.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      option.subtitle,
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.slate),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: _Radio(selected: selected),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Radio extends StatelessWidget {
+  const _Radio({required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: selected ? AppColors.teal : AppColors.fieldBorder,
+          width: 2,
+        ),
+      ),
+      child: selected
+          ? Center(
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.teal,
+                ),
+              ),
+            )
+          : null,
     );
   }
 }
