@@ -8,6 +8,7 @@ import '../widgets/becu_logo.dart';
 import '../widgets/tab_content_switcher.dart';
 import 'account_tabs/credit_details_tab.dart';
 import 'account_tabs/transactions_tab.dart';
+import 'make_payment_screen.dart';
 
 /// Credit card view: current balance, a single "Make A Payment" action and
 /// the Transactions / Details tabs (Details carries payment terms and
@@ -91,18 +92,14 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Make A Payment is not part of this '
-                                  'prototype.',
-                                ),
-                              ),
-                            );
-                        },
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => MakePaymentScreen(
+                              initialStep: 1,
+                              initialToAccount: account,
+                            ),
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.teal,
                           shape: RoundedRectangleBorder(

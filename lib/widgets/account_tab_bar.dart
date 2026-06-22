@@ -26,10 +26,9 @@ class AccountTabBar extends StatelessWidget {
       child: Row(
         children: [
           for (final (index, label) in tabs.indexed)
-            // Flex by label length so tabs fill the full width with no gaps
-            // while the longer "Savings Buckets" tab still gets enough room.
+            // Equal-width tabs that fill the strip — balanced regardless of
+            // how long each label is.
             Expanded(
-              flex: label.length,
               child: InkWell(
                 onTap: () => onChanged(index),
                 child: AnimatedContainer(

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
+import 'package:mobile_app/screens/credit_card_detail_screen.dart';
 import 'package:mobile_app/screens/make_payment_screen.dart';
 import 'package:mobile_app/screens/more_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
@@ -255,6 +256,23 @@ void main() {
     expect(find.text('Success!'), findsOneWidget);
     expect(find.text('Done'), findsOneWidget);
     expect(find.text('Sending On'), findsOneWidget);
+  });
+
+  testWidgets('credit card Make A Payment opens the payment flow',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: CreditCardDetailScreen(account: visaCreditCard),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Make A Payment'));
+    await tester.pumpAndSettle();
+
+    // Lands on the From step with the card already chosen as the payee.
+    expect(find.text('Where is the money from?'), findsOneWidget);
+    expect(find.textContaining('Credit Card'), findsWidgets);
   });
 
   testWidgets('Make a Payment picks a card, source, and preset amount',
