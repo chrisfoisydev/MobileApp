@@ -129,10 +129,15 @@ void main() {
     await tester.tap(find.text('MOVE MONEY'));
     await tester.pumpAndSettle();
     expect(find.text('Make a Payment'), findsOneWidget);
-    expect(find.text('Transfer Between Accounts'), findsOneWidget);
+
+    // The transfer tile sits in the second section; scroll it into view.
+    final transferTile = find.text('Transfer Between Accounts');
+    await tester.scrollUntilVisible(transferTile, 120,
+        scrollable: find.byType(Scrollable).first);
+    expect(transferTile, findsOneWidget);
 
     // From Move Money, the transfer tile opens the transfer flow.
-    await tester.tap(find.text('Transfer Between Accounts'));
+    await tester.tap(transferTile);
     await tester.pumpAndSettle();
     expect(find.text('Where is the money going?'), findsOneWidget);
 
