@@ -26,6 +26,9 @@ class _ManageCardTabState extends State<ManageCardTab> {
         const SizedBox(height: 8),
         SurfaceCard(
           padding: EdgeInsets.zero,
+          // Rows are not separated by per-row rules; a single divider sets
+          // the card-identity rows apart from the controls (matching the
+          // BECU design).
           child: Column(
             children: [
               const _ManageRow(
@@ -41,7 +44,13 @@ class _ManageCardTabState extends State<ManageCardTab> {
                 labelColor: AppColors.slate,
                 trailing: Text('Exp 03/29', style: TextStyle(fontSize: 15)),
               ),
-              const Divider(height: 1, thickness: 4),
+              const Divider(
+                height: 1,
+                thickness: 1,
+                indent: 16,
+                endIndent: 16,
+                color: AppColors.borderSubtle,
+              ),
               _ManageRow(
                 label: 'Card Lock',
                 labelColor: AppColors.navy,
@@ -95,7 +104,6 @@ class _ManageCardTabState extends State<ManageCardTab> {
                 label: 'Report Lost or Stolen',
                 labelColor: AppColors.navy,
                 trailing: Icon(Icons.chevron_right, color: AppColors.teal),
-                showDivider: false,
               ),
             ],
           ),
@@ -110,138 +118,142 @@ class _ManageRow extends StatelessWidget {
     required this.label,
     required this.labelColor,
     required this.trailing,
-    this.showDivider = true,
   });
 
   final String label;
   final Color labelColor;
   final Widget trailing;
-  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(fontSize: 16, color: labelColor),
-                ),
-              ),
-              trailing,
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 16, color: labelColor),
+            ),
           ),
-        ),
-        if (showDivider) const Divider(height: 1),
-      ],
+          trailing,
+        ],
+      ),
     );
   }
 }
 
+/// The debit card hero. Uses the bundled BECU card image when present
+/// (assets/images/becu_debit_card.png), falling back to a painted replica.
 class _DebitCardArt extends StatelessWidget {
   const _DebitCardArt();
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: 343 / 176,
+      // Standard payment-card proportions, matching the BECU card art.
+      aspectRatio: 1.586,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFFA01B21),
-                Color(0xFFA01B21),
-                Color(0xFFD02A30),
-                Color(0xFFD02A30),
-              ],
-              stops: [0.0, 0.32, 0.32, 1.0],
+        child: Image.asset(
+          'assets/images/becu_debit_card.png',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stack) => const _PaintedDebitCard(),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaintedDebitCard extends StatelessWidget {
+  const _PaintedDebitCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFFA01B21),
+            Color(0xFFA01B21),
+            Color(0xFFD02A30),
+            Color(0xFFD02A30),
+          ],
+          stops: [0.0, 0.32, 0.32, 1.0],
+        ),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Align(
+            alignment: Alignment.topRight,
+            child: BecuLogo(height: 30, outlined: true),
+          ),
+          const Spacer(),
+          const _ChipArt(),
+          const SizedBox(height: 12),
+          const Text(
+            '5444 4812 3456 7891',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              letterSpacing: 1.6,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Align(
-                alignment: Alignment.topRight,
-                child: BecuLogo(height: 30, outlined: true),
-              ),
-              const Spacer(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _ChipArt(),
-                        const SizedBox(height: 10),
-                        const Text(
-                          '5444 4812 3456 7891',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            letterSpacing: 1.5,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              'VALID\nTHRU',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontSize: 5,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              '03/26',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'LEE M. CARDHOLDER',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'debit',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
+                      'VALID\nTHRU',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 5,
+                        height: 1.2,
                       ),
-                      SizedBox(height: 6),
-                      _MastercardMark(),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      '03/26',
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                'debit',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Expanded(
+                child: Text(
+                  'LEE M. CARDHOLDER',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              const _MastercardMark(),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -253,8 +265,8 @@ class _ChipArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 38,
-      height: 28,
+      width: 40,
+      height: 30,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFFE7C76C), Color(0xFFC9A24B)],
@@ -268,49 +280,43 @@ class _ChipArt extends StatelessWidget {
   }
 }
 
+/// The Mastercard mark — two overlapping circles directly on the card
+/// (no white background), matching the BECU card art.
 class _MastercardMark extends StatelessWidget {
   const _MastercardMark();
 
   @override
   Widget build(BuildContext context) {
+    return SizedBox(
+      width: 46,
+      height: 28,
+      child: Stack(
+        children: [
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: _Circle(color: Color(0xFFEB001B)),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: _Circle(color: const Color(0xFFF79E1B).withValues(alpha: 0.9)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Circle extends StatelessWidget {
+  const _Circle({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: 58,
-      height: 34,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: SizedBox(
-        width: 34,
-        height: 20,
-        child: Stack(
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                width: 20,
-                height: 20,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEB001B),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF79E1B).withValues(alpha: 0.9),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
