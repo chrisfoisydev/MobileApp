@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
+import 'package:mobile_app/screens/more_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
 import 'package:mobile_app/screens/transfer_screen.dart';
 import 'package:mobile_app/screens/welcome_screen.dart';
@@ -230,5 +231,42 @@ void main() {
     await tester.tap(find.byIcon(Icons.edit_outlined).at(2));
     await tester.pumpAndSettle();
     expect(find.textContaining('How much would you like'), findsOneWidget);
+  });
+
+  testWidgets('confirming a transfer shows the success screen',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: TransferScreen(
+        initialStep: 4,
+        initialToAccount: checkingAndSavings[2],
+        initialFromAccount: jointChecking,
+        initialAmountCents: 7500,
+        initialSelectedDay: 14,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Confirm'));
+    // Fixed pumps (the success Lottie plays a one-shot animation).
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.text('Success!'), findsOneWidget);
+    expect(find.text('Done'), findsOneWidget);
+    expect(find.text('Sending On'), findsOneWidget);
+  });
+
+  testWidgets('More tab offers the payment success animation',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: MoreScreen()));
+    await tester.pumpAndSettle();
+
+    final option = find.text('Payment success animation');
+    expect(option, findsOneWidget);
+
+    await tester.tap(option);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('Success!'), findsOneWidget);
   });
 }

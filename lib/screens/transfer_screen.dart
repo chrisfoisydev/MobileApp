@@ -7,6 +7,7 @@ import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/becu_logo.dart';
 import '../widgets/detail_row.dart';
+import 'payment_success_screen.dart';
 import '../widgets/surface_card.dart';
 
 /// Transfer flow with four steps tracked across the top:
@@ -133,17 +134,19 @@ class _TransferScreenState extends State<TransferScreen> {
   void _editStep(int step) => _goToStep(step);
 
   void _confirm() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            'Transfer of ${formatCurrency(_amountCents / 100)} to '
-            '${_toAccount?.nickname ?? 'your account'} confirmed.',
-          ),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PaymentSuccessScreen(
+          amount: formatCurrency(_amountCents / 100),
+          fromLabel: _fromAccount?.displayName ?? '',
+          toLabel: _toAccount?.displayName ?? '',
+          dateLabel: 'June ${_selectedDay ?? _todayDay}, 2026',
+          // Done returns all the way to wherever the transfer was launched.
+          onDone: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
         ),
-      );
-    Navigator.of(context).maybePop();
+      ),
+    );
   }
 
   String get _title => switch (_step) {

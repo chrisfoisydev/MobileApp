@@ -11,6 +11,7 @@ import '../widgets/profile_menu_button.dart';
 import '../widgets/surface_card.dart';
 import 'account_detail_screen.dart';
 import 'credit_card_detail_screen.dart';
+import 'more_screen.dart';
 import 'move_money_screen.dart';
 import 'transfer_screen.dart';
 
@@ -59,6 +60,10 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
   void _onNavSelect(int index, String label) {
     if (index == 1) {
       _openMoveMoney();
+    } else if (index == 4) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MoreScreen()),
+      );
     } else if (index != 0) {
       _showPrototypeNotice(label);
     }

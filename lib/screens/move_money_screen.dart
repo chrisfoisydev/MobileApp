@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/account_tab_bar.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../widgets/surface_card.dart';
+import 'more_screen.dart';
 import 'transfer_screen.dart';
 
 /// Move Money hub: a grouped launcher of payment/transfer actions plus a
@@ -38,6 +39,10 @@ class _MoveMoneyScreenState extends State<MoveMoneyScreen> {
   void _onNavSelect(int index, String label) {
     if (index == 0) {
       Navigator.of(context).maybePop();
+    } else if (index == 4) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MoreScreen()),
+      );
     } else if (index != 1) {
       _notice(label);
     }

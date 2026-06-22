@@ -17,8 +17,10 @@ import 'package:mobile_app/data/mock_data.dart';
 import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
 import 'package:mobile_app/screens/credit_card_detail_screen.dart';
+import 'package:mobile_app/screens/more_screen.dart';
 import 'package:mobile_app/screens/move_money_screen.dart';
 import 'package:mobile_app/screens/my_profile_screen.dart';
+import 'package:mobile_app/screens/payment_success_screen.dart';
 import 'package:mobile_app/screens/sign_in_screen.dart';
 import 'package:mobile_app/screens/transaction_detail_screen.dart';
 import 'package:mobile_app/screens/transfer_screen.dart';
@@ -65,6 +67,13 @@ void main() {
       initialTab: 1,
     ),
     'my_profile': const MyProfileScreen(),
+    'more': const MoreScreen(),
+    'payment_success': const PaymentSuccessScreen(
+      amount: r'$2,500.00',
+      fromLabel: 'Joint Checking ...4567',
+      toLabel: 'Mortgage Loan ...2345',
+      dateLabel: 'June 14, 2026',
+    ),
     'move_money': const MoveMoneyScreen(),
     'transfer': const TransferScreen(),
     'transfer_from': TransferScreen(
