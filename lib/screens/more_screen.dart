@@ -2,17 +2,25 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../widgets/profile_menu_button.dart';
 import '../widgets/surface_card.dart';
 import 'move_money_screen.dart';
-import 'payment_success_screen.dart';
-import 'welcome_screen.dart';
 
-/// The "More" hub reached from the bottom navigation: secondary options
-/// including a preview of the payment-success celebration.
-class MoreScreen extends StatelessWidget {
+/// The "More" hub reached from the bottom navigation: secondary services
+/// grouped into a top list plus collapsible "Manage" and "Personalization"
+/// sections.
+class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
 
-  void _notice(BuildContext context, String feature) {
+  @override
+  State<MoreScreen> createState() => _MoreScreenState();
+}
+
+class _MoreScreenState extends State<MoreScreen> {
+  bool _manageExpanded = true;
+  bool _personalizationExpanded = true;
+
+  void _notice(String feature) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -20,22 +28,7 @@ class MoreScreen extends StatelessWidget {
       );
   }
 
-  void _previewSuccess(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => PaymentSuccessScreen(
-          amount: r'$2,500.00',
-          fromLabel: 'Joint Checking ...4567',
-          toLabel: 'Mortgage Loan ...2345',
-          dateLabel: 'June 14, 2026',
-          noun: 'payment',
-          onDone: () => Navigator.of(context).maybePop(),
-        ),
-      ),
-    );
-  }
-
-  void _onNavSelect(BuildContext context, int index, String label) {
+  void _onNavSelect(int index, String label) {
     switch (index) {
       case 0:
         Navigator.of(context).popUntil((r) => r.isFirst);
@@ -46,7 +39,7 @@ class MoreScreen extends StatelessWidget {
       case 4:
         break; // already here
       default:
-        _notice(context, label);
+        _notice(label);
     }
   }
 
@@ -58,11 +51,23 @@ class MoreScreen extends StatelessWidget {
         children: [
           Container(
             color: Colors.white,
-            child: const SafeArea(
+            child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
-                child: Text('More', style: TextStyle(fontSize: 18)),
+                padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text('More', style: TextStyle(fontSize: 18)),
+                    ),
+                    IconButton(
+                      onPressed: () => _notice('Notifications'),
+                      icon: const Icon(Icons.notifications_none,
+                          color: AppColors.navy),
+                    ),
+                    const ProfileMenuButton(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -70,115 +75,172 @@ class MoreScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
-                _Tile(
-                  icon: Icons.celebration_outlined,
-                  title: 'Payment success animation',
-                  subtitle: 'Preview the celebration',
-                  onTap: () => _previewSuccess(context),
+                _MoreRow(
+                  label: 'Statements & Documents',
+                  onTap: () => _notice('Statements & Documents'),
                 ),
-                const SizedBox(height: 10),
-                _Tile(
-                  icon: Icons.settings_outlined,
-                  title: 'Settings',
-                  subtitle: 'Profile, security & preferences',
-                  onTap: () => _notice(context, 'Settings'),
+                const SizedBox(height: 12),
+                _MoreRow(
+                  label: 'Fraud Claims & Disputes',
+                  onTap: () => _notice('Fraud Claims & Disputes'),
                 ),
-                const SizedBox(height: 10),
-                _Tile(
-                  icon: Icons.help_outline,
-                  title: 'Help & Support',
-                  subtitle: 'FAQs and contact options',
-                  onTap: () => _notice(context, 'Help & Support'),
+                const SizedBox(height: 12),
+                _MoreRow(
+                  label: 'Manage Cards',
+                  onTap: () => _notice('Manage Cards'),
                 ),
-                const SizedBox(height: 10),
-                _Tile(
-                  icon: Icons.place_outlined,
-                  title: 'Find a Branch or ATM',
-                  subtitle: 'Locations near you',
-                  onTap: () => _notice(context, 'Find a Branch or ATM'),
+                const SizedBox(height: 12),
+                _MoreRow(
+                  label: 'Stop Checks',
+                  onTap: () => _notice('Stop Checks'),
                 ),
-                const SizedBox(height: 10),
-                _Tile(
-                  icon: Icons.gavel_outlined,
-                  title: 'Legal & Privacy',
-                  subtitle: 'Disclosures and policies',
-                  onTap: () => _notice(context, 'Legal & Privacy'),
+                const SizedBox(height: 12),
+                _MoreRow(
+                  label: 'BECU Locations',
+                  trailing: const Icon(Icons.place_outlined,
+                      color: AppColors.teal, size: 20),
+                  onTap: () => _notice('BECU Locations'),
                 ),
-                const SizedBox(height: 10),
-                _Tile(
-                  icon: Icons.logout,
-                  iconColor: AppColors.becuRed,
-                  title: 'Log Out',
-                  subtitle: 'Sign out of your account',
-                  onTap: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                    (route) => false,
+                const SizedBox(height: 12),
+                _MoreRow(
+                  label: 'Call BECU',
+                  trailing:
+                      const Icon(Icons.phone, color: AppColors.teal, size: 20),
+                  onTap: () => _notice('Call BECU'),
+                ),
+                const SizedBox(height: 24),
+                _SectionHeader(
+                  title: 'Manage',
+                  expanded: _manageExpanded,
+                  onToggle: () =>
+                      setState(() => _manageExpanded = !_manageExpanded),
+                ),
+                if (_manageExpanded) ...[
+                  _MoreRow(
+                    label: 'Contacts',
+                    onTap: () => _notice('Contacts'),
                   ),
+                  const SizedBox(height: 12),
+                  _MoreRow(
+                    label: 'Linked Accounts',
+                    onTap: () => _notice('Linked Accounts'),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                _SectionHeader(
+                  title: 'Personalization',
+                  expanded: _personalizationExpanded,
+                  onToggle: () => setState(
+                      () => _personalizationExpanded = !_personalizationExpanded),
                 ),
+                if (_personalizationExpanded) ...[
+                  _MoreRow(
+                    label: 'Theme',
+                    trailing: _ValueEdit(value: 'Light'),
+                    onTap: () => _notice('Theme'),
+                  ),
+                  const SizedBox(height: 12),
+                  _MoreRow(
+                    label: 'Text Size',
+                    trailing: _ValueEdit(value: 'Standard'),
+                    onTap: () => _notice('Text Size'),
+                  ),
+                ],
               ],
             ),
           ),
-          AppBottomNav(
-            currentIndex: 4,
-            onSelect: (i, label) => _onNavSelect(context, i, label),
-          ),
+          AppBottomNav(currentIndex: 4, onSelect: _onNavSelect),
         ],
       ),
     );
   }
 }
 
-class _Tile extends StatelessWidget {
-  const _Tile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.iconColor = AppColors.teal,
-  });
+/// A single white row: a label on the left and a trailing widget (a teal
+/// chevron by default).
+class _MoreRow extends StatelessWidget {
+  const _MoreRow({required this.label, required this.onTap, this.trailing});
 
-  final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
   final VoidCallback onTap;
-  final Color iconColor;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     return SurfaceCard(
       onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 14),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(fontSize: 13, color: AppColors.slate),
-                ),
-              ],
+            child: Text(label, style: const TextStyle(fontSize: 16)),
+          ),
+          trailing ??
+              const Icon(Icons.chevron_right, color: AppColors.teal),
+        ],
+      ),
+    );
+  }
+}
+
+class _ValueEdit extends StatelessWidget {
+  const _ValueEdit({required this.value});
+
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+              fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.teal),
+        ),
+        const SizedBox(width: 8),
+        const Icon(Icons.edit_outlined, color: AppColors.teal, size: 18),
+      ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.expanded,
+    required this.onToggle,
+  });
+
+  final String title;
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(child: Text(title, style: AppTextStyles.sectionLabel)),
+          InkWell(
+            onTap: onToggle,
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.teal, width: 1.5),
+              ),
+              child: Icon(
+                expanded ? Icons.expand_less : Icons.expand_more,
+                size: 18,
+                color: AppColors.teal,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: AppColors.slate),
         ],
       ),
     );

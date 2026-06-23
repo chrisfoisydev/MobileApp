@@ -335,17 +335,18 @@ void main() {
     expect(find.textContaining('Your payment is scheduled'), findsOneWidget);
   });
 
-  testWidgets('More tab offers the payment success animation',
+  testWidgets('More tab shows the secondary services menu',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: MoreScreen()));
     await tester.pumpAndSettle();
 
-    final option = find.text('Payment success animation');
-    expect(option, findsOneWidget);
+    expect(find.text('Statements & Documents'), findsOneWidget);
+    expect(find.text('Manage Cards'), findsOneWidget);
 
-    await tester.tap(option);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(find.text('Success!'), findsOneWidget);
+    final theme = find.text('Theme');
+    await tester.scrollUntilVisible(theme, 150,
+        scrollable: find.byType(Scrollable).first);
+    expect(theme, findsOneWidget);
+    expect(find.text('Personalization'), findsOneWidget);
   });
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
-
 /// The segmented tab strip used by the account and credit card detail
 /// screens: the selected tab reads as white with a red top rule.
 class AccountTabBar extends StatelessWidget {

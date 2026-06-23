@@ -23,6 +23,9 @@ class AppBottomNav extends StatelessWidget {
     (Icons.menu, 'MORE'),
   ];
 
+  /// Pale-teal wash behind the selected tab.
+  static const _selectedFill = Color(0xFFEAF4F6);
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -38,39 +41,50 @@ class AppBottomNav extends StatelessWidget {
               Expanded(
                 child: InkWell(
                   onTap: () => onSelect(index, item.$2),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 3,
-                        color: index == currentIndex
-                            ? AppColors.teal
-                            : Colors.transparent,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    // Selected tab: pale-teal fill + a teal top rule + teal
+                    // icon/label — applied uniformly to every footer item.
+                    decoration: BoxDecoration(
+                      color: index == currentIndex
+                          ? _selectedFill
+                          : Colors.transparent,
+                      border: Border(
+                        top: BorderSide(
+                          color: index == currentIndex
+                              ? AppColors.teal
+                              : Colors.transparent,
+                          width: 2.5,
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Icon(
-                        item.$1,
-                        size: 24,
-                        color: index == currentIndex
-                            ? AppColors.teal
-                            : AppColors.ink,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.$2,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: index == currentIndex
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          item.$1,
+                          size: 24,
                           color: index == currentIndex
                               ? AppColors.teal
                               : AppColors.ink,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          item.$2,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: index == currentIndex
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: index == currentIndex
+                                ? AppColors.teal
+                                : AppColors.ink,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
