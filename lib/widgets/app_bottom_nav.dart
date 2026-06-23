@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -15,11 +17,11 @@ class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final void Function(int index, String label) onSelect;
 
-  // (icon, label, showsNotificationBadge)
+  // (icon, label, showsAiSparkle)
   static const items = <(IconData, String, bool)>[
     (Icons.account_balance_wallet_outlined, 'ACCOUNTS', false),
     (Icons.swap_horiz, 'MOVE MONEY', false),
-    (Icons.chat_bubble_outline, 'CONTACT', true),
+    (Icons.chat_bubble_outline, 'ASK BECA', true),
     (Icons.menu, 'MORE', false),
   ];
 
@@ -123,19 +125,51 @@ class _NavIcon extends StatelessWidget {
       children: [
         glyph,
         Positioned(
-          right: -2,
-          top: -2,
-          child: Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(
-              color: AppColors.becuRed,
-              shape: BoxShape.circle,
-              border: Border.all(color: badgeBorder, width: 1.5),
-            ),
+          right: -4,
+          top: -4,
+          child: CustomPaint(
+            size: const Size(13, 13),
+            painter: _SparklePainter(border: badgeBorder),
           ),
         ),
       ],
     );
   }
+}
+
+/// A small red four-point "AI" sparkle (the Ask BECA mark).
+class _SparklePainter extends CustomPainter {
+  _SparklePainter({required this.border});
+
+  final Color border;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = Offset(size.width / 2, size.height / 2);
+    final outer = size.width / 2;
+    final inner = outer * 0.34;
+    final path = Path();
+    for (var i = 0; i < 8; i++) {
+      final radius = i.isEven ? outer : inner;
+      final angle = -math.pi / 2 + i * math.pi / 4;
+      final p = Offset(
+        c.dx + radius * math.cos(angle),
+        c.dy + radius * math.sin(angle),
+      );
+      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+    }
+    path.close();
+    // Thin halo so the sparkle separates from the icon beneath it.
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = border
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    canvas.drawPath(path, Paint()..color = AppColors.becuRed);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparklePainter old) => old.border != border;
 }
