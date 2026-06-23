@@ -60,7 +60,7 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
   void _onNavSelect(int index, String label) {
     if (index == 1) {
       _openMoveMoney();
-    } else if (index == 4) {
+    } else if (index == 3) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const MoreScreen()),
       );
@@ -355,47 +355,36 @@ class _LabeledBalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SurfaceCard(
       margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
+          const BecuBadge(),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              account.displayName,
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const BecuBadge(),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  account.displayName,
-                  style: const TextStyle(fontSize: 15),
+              Text(
+                formatCurrency(account.availableBalance),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
+              if (account.balanceLabel != null)
                 Text(
-                  formatCurrency(account.availableBalance),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  account.balanceLabel!,
+                  style: const TextStyle(fontSize: 12, color: AppColors.slate),
                 ),
-                if (account.balanceLabel != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    account.balanceLabel!,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.slate,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+            ],
           ),
         ],
       ),

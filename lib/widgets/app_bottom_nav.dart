@@ -19,7 +19,6 @@ class AppBottomNav extends StatelessWidget {
     (Icons.business_center_outlined, 'ACCOUNTS'),
     (Icons.swap_horiz, 'MOVE MONEY'),
     (Icons.chat_bubble_outline, 'CONTACT'),
-    (Icons.settings_outlined, 'SERVICES'),
     (Icons.menu, 'MORE'),
   ];
 

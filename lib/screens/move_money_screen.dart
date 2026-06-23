@@ -40,7 +40,7 @@ class _MoveMoneyScreenState extends State<MoveMoneyScreen> {
   void _onNavSelect(int index, String label) {
     if (index == 0) {
       Navigator.of(context).maybePop();
-    } else if (index == 4) {
+    } else if (index == 3) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const MoreScreen()),
       );

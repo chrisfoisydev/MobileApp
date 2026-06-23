@@ -37,7 +37,7 @@ class _MoreScreenState extends State<MoreScreen> {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const MoveMoneyScreen()),
         );
-      case 4:
+      case 3:
         break; // already here
       default:
         _notice(label);
@@ -154,7 +154,7 @@ class _MoreScreenState extends State<MoreScreen> {
               ],
             ),
           ),
-          AppBottomNav(currentIndex: 4, onSelect: _onNavSelect),
+          AppBottomNav(currentIndex: 3, onSelect: _onNavSelect),
         ],
       ),
     );
