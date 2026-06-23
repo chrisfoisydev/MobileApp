@@ -103,30 +103,10 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
                     CascadeIn(
                       key: ValueKey('cs-${account.last4}'),
                       index: 2 + i,
-                      child: SurfaceCard(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
+                      child: _LabeledBalanceCard(
+                        account: account,
+                        label: 'Available Balance',
                         onTap: () => _openAccount(account),
-                        child: Row(
-                          children: [
-                            const BecuBadge(),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                account.displayName,
-                                style: const TextStyle(fontSize: 15),
-                              ),
-                            ),
-                            Text(
-                              formatCurrency(account.availableBalance),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                 const SizedBox(height: 12),
@@ -142,6 +122,7 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
                     index: 6 + i,
                     child: _LabeledBalanceCard(
                       account: account,
+                      label: account.balanceLabel ?? 'Current Balance',
                       onTap: () => _openAccount(account),
                     ),
                   ),
@@ -157,6 +138,7 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
                     index: 8 + creditCards.length + i,
                     child: _LabeledBalanceCard(
                       account: account,
+                      label: account.balanceLabel ?? 'Current Balance',
                       onTap: () => _openAccount(account),
                     ),
                   ),
@@ -346,9 +328,14 @@ class _SectionHeader extends StatelessWidget {
 /// Card with the balance caption (e.g. "Current Balance") used by the
 /// credit card and loan sections.
 class _LabeledBalanceCard extends StatelessWidget {
-  const _LabeledBalanceCard({required this.account, required this.onTap});
+  const _LabeledBalanceCard({
+    required this.account,
+    required this.label,
+    required this.onTap,
+  });
 
   final Account account;
+  final String label;
   final VoidCallback onTap;
 
   @override
@@ -379,9 +366,9 @@ class _LabeledBalanceCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              if (account.balanceLabel != null)
+              if (label.isNotEmpty)
                 Text(
-                  account.balanceLabel!,
+                  label,
                   style: const TextStyle(fontSize: 12, color: AppColors.slate),
                 ),
             ],
