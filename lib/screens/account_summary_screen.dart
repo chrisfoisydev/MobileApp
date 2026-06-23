@@ -138,7 +138,7 @@ class _AccountSummaryScreenState extends State<AccountSummaryScreen> {
                     index: 8 + creditCards.length + i,
                     child: _LabeledBalanceCard(
                       account: account,
-                      label: account.balanceLabel ?? 'Current Balance',
+                      label: 'Current Balance',
                       onTap: () => _openAccount(account),
                     ),
                   ),
