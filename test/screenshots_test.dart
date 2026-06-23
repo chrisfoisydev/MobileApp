@@ -18,6 +18,7 @@ import 'package:mobile_app/screens/account_detail_screen.dart';
 import 'package:mobile_app/screens/account_summary_screen.dart';
 import 'package:mobile_app/screens/credit_card_detail_screen.dart';
 import 'package:mobile_app/screens/make_payment_screen.dart';
+import 'package:mobile_app/screens/manage_cards_screen.dart';
 import 'package:mobile_app/screens/more_screen.dart';
 import 'package:mobile_app/screens/move_money_screen.dart';
 import 'package:mobile_app/screens/my_profile_screen.dart';
@@ -69,6 +70,7 @@ void main() {
     ),
     'my_profile': const MyProfileScreen(),
     'more': const MoreScreen(),
+    'manage_cards': const ManageCardsScreen(),
     'payment_success': const PaymentSuccessScreen(
       amount: r'$2,500.00',
       fromLabel: 'Joint Checking ...4567',

@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../widgets/profile_menu_button.dart';
 import '../widgets/surface_card.dart';
+import 'manage_cards_screen.dart';
 import 'move_money_screen.dart';
 
 /// The "More" hub reached from the bottom navigation: secondary services
@@ -87,7 +88,11 @@ class _MoreScreenState extends State<MoreScreen> {
                 const SizedBox(height: 12),
                 _MoreRow(
                   label: 'Manage Cards',
-                  onTap: () => _notice('Manage Cards'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ManageCardsScreen(),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 _MoreRow(

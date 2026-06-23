@@ -349,4 +349,16 @@ void main() {
     expect(theme, findsOneWidget);
     expect(find.text('Personalization'), findsOneWidget);
   });
+
+  testWidgets('More -> Manage Cards opens the cards hub', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: MoreScreen()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Manage Cards'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cards'), findsOneWidget);
+    expect(find.text('Credit Card ****9009'), findsOneWidget);
+    expect(find.text('Needs to be activated'), findsOneWidget);
+  });
 }
