@@ -214,6 +214,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           fromLabel: _fromAccount?.displayName ?? '',
           toLabel: _toAccount?.displayName ?? '',
           dateLabel: 'June ${_selectedDay ?? _todayDay}, 2026',
+          noun: 'payment',
           onDone: () =>
               Navigator.of(context).popUntil((route) => route.isFirst),
         ),

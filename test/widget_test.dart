@@ -256,6 +256,7 @@ void main() {
     expect(find.text('Success!'), findsOneWidget);
     expect(find.text('Done'), findsOneWidget);
     expect(find.text('Sending On'), findsOneWidget);
+    expect(find.textContaining('Your transfer is scheduled'), findsOneWidget);
   });
 
   testWidgets('credit card Make A Payment opens the payment flow',
@@ -331,6 +332,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.text('Success!'), findsOneWidget);
+    expect(find.textContaining('Your payment is scheduled'), findsOneWidget);
   });
 
   testWidgets('More tab offers the payment success animation',

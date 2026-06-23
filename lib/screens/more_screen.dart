@@ -28,6 +28,7 @@ class MoreScreen extends StatelessWidget {
           fromLabel: 'Joint Checking ...4567',
           toLabel: 'Mortgage Loan ...2345',
           dateLabel: 'June 14, 2026',
+          noun: 'payment',
           onDone: () => Navigator.of(context).maybePop(),
         ),
       ),

@@ -14,6 +14,7 @@ class PaymentSuccessScreen extends StatelessWidget {
     required this.fromLabel,
     required this.toLabel,
     required this.dateLabel,
+    this.noun = 'transfer',
     this.onDone,
   });
 
@@ -21,6 +22,9 @@ class PaymentSuccessScreen extends StatelessWidget {
   final String fromLabel;
   final String toLabel;
   final String dateLabel;
+
+  /// What was sent — "transfer" or "payment" — used in the subtitle copy.
+  final String noun;
   final VoidCallback? onDone;
 
   @override
@@ -56,7 +60,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Your transfer is scheduled for $dateLabel.',
+                      'Your $noun is scheduled for $dateLabel.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                           fontSize: 16, color: AppColors.slate),
