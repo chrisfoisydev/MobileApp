@@ -2,6 +2,71 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:video_player/video_player.dart';
+
+/// The login backdrop. Plays a looping, muted drone-over-Seattle video when
+/// `assets/video/seattle_login.mp4` is bundled and the platform can decode it;
+/// otherwise it falls back to the painted animated scene — so it always
+/// renders, including in tests and where the video is unavailable.
+class LoginScene extends StatefulWidget {
+  const LoginScene({super.key});
+
+  @override
+  State<LoginScene> createState() => _LoginSceneState();
+}
+
+class _LoginSceneState extends State<LoginScene> {
+  VideoPlayerController? _controller;
+  bool _videoReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    try {
+      final c = VideoPlayerController.asset('assets/video/seattle_login.mp4');
+      _controller = c;
+      await c.initialize();
+      await c.setLooping(true);
+      await c.setVolume(0);
+      await c.play();
+      if (mounted) setState(() => _videoReady = true);
+    } catch (_) {
+      // No video bundled (or it can't be decoded here) — paint the scene.
+      if (mounted) setState(() => _videoReady = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _controller;
+    if (_videoReady && c != null && c.value.isInitialized) {
+      return ClipRect(
+        child: SizedBox.expand(
+          child: FittedBox(
+            fit: BoxFit.cover,
+            clipBehavior: Clip.hardEdge,
+            child: SizedBox(
+              width: c.value.size.width,
+              height: c.value.size.height,
+              child: VideoPlayer(c),
+            ),
+          ),
+        ),
+      );
+    }
+    return const _PaintedScene();
+  }
+}
 
 /// A layered, animated Seattle-dawn backdrop for the login screen.
 ///
@@ -14,8 +79,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 ///
 /// Pure Dart and plugin-free, so it renders identically on web, Windows, and
 /// an Android emulator.
-class LoginScene extends StatelessWidget {
-  const LoginScene({super.key});
+class _PaintedScene extends StatelessWidget {
+  const _PaintedScene();
 
   /// Fraction of the height where the land/water horizon sits.
   static const double _horizon = 0.60;
@@ -360,7 +425,7 @@ class _RangePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final base = h * LoginScene._horizon;
+    final base = h * _PaintedScene._horizon;
     const peaks = [0.0, 0.45, 0.2, 0.62, 0.34, 0.85, 0.4, 0.72, 0.22, 0.55];
     final path = Path()..moveTo(-w * 0.15, base);
     for (var i = 0; i < peaks.length; i++) {
@@ -391,7 +456,7 @@ class _RainierPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final base = h * LoginScene._horizon;
+    final base = h * _PaintedScene._horizon;
     final cx = w * 0.5;
     final peakY = base - h * 0.42;
 
@@ -440,7 +505,7 @@ class _SkylinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final base = h * LoginScene._horizon;
+    final base = h * _PaintedScene._horizon;
     final fill = Paint()..color = const Color(0xFF2C3656);
 
     const towers = <List<double>>[

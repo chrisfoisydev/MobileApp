@@ -17,6 +17,9 @@ dependencies:
   # Pure-Dart Lottie renderer (no native plugin) for the payment-success
   # celebration animation.
   lottie: ^3.0.0
+  # Plays the optional drone-over-Seattle login backdrop video. (A native
+  # plugin — fine for CI-built APKs and the web build.)
+  video_player: ^2.9.0
 
 dev_dependencies:
   flutter_test:
@@ -28,3 +31,4 @@ flutter:
   assets:
     - assets/images/
     - assets/lottie/
+    - assets/video/
