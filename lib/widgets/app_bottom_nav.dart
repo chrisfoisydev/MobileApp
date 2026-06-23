@@ -15,11 +15,12 @@ class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final void Function(int index, String label) onSelect;
 
-  static const items = <(IconData, String)>[
-    (Icons.business_center_outlined, 'ACCOUNTS'),
-    (Icons.swap_horiz, 'MOVE MONEY'),
-    (Icons.chat_bubble_outline, 'CONTACT'),
-    (Icons.menu, 'MORE'),
+  // (icon, label, showsNotificationBadge)
+  static const items = <(IconData, String, bool)>[
+    (Icons.account_balance_wallet_outlined, 'ACCOUNTS', false),
+    (Icons.swap_horiz, 'MOVE MONEY', false),
+    (Icons.chat_bubble_outline, 'CONTACT', true),
+    (Icons.menu, 'MORE', false),
   ];
 
   /// Pale-teal wash behind the selected tab.
@@ -61,12 +62,13 @@ class AppBottomNav extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          item.$1,
-                          size: 24,
-                          color: index == currentIndex
-                              ? AppColors.teal
-                              : AppColors.ink,
+                        _NavIcon(
+                          icon: item.$1,
+                          badge: item.$3,
+                          selected: index == currentIndex,
+                          badgeBorder: index == currentIndex
+                              ? _selectedFill
+                              : Colors.white,
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -90,6 +92,50 @@ class AppBottomNav extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A footer icon, optionally with a red notification dot (e.g. Contact).
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({
+    required this.icon,
+    required this.badge,
+    required this.selected,
+    required this.badgeBorder,
+  });
+
+  final IconData icon;
+  final bool badge;
+  final bool selected;
+  final Color badgeBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    final glyph = Icon(
+      icon,
+      size: 24,
+      color: selected ? AppColors.teal : AppColors.ink,
+    );
+    if (!badge) return glyph;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        glyph,
+        Positioned(
+          right: -2,
+          top: -2,
+          child: Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              color: AppColors.becuRed,
+              shape: BoxShape.circle,
+              border: Border.all(color: badgeBorder, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
