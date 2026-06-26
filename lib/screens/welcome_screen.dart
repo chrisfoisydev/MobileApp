@@ -168,6 +168,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           child: OutlinedButton.icon(
                             onPressed: () => Navigator.of(context).push(
                               MaterialPageRoute(
+                                settings:
+                                    const RouteSettings(name: '/accounts'),
                                 builder: (_) => const AccountSummaryScreen(),
                               ),
                             ),

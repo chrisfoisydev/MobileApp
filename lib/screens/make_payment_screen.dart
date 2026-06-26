@@ -215,8 +215,9 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           toLabel: _toAccount?.displayName ?? '',
           dateLabel: 'June ${_selectedDay ?? _todayDay}, 2026',
           noun: 'payment',
+          // Done returns to the account summary.
           onDone: () =>
-              Navigator.of(context).popUntil((route) => route.isFirst),
+              Navigator.of(context).popUntil(ModalRoute.withName('/accounts')),
         ),
       ),
     );

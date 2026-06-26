@@ -156,7 +156,7 @@ class MyProfileScreen extends StatelessWidget {
             currentIndex: -1,
             onSelect: (index, label) {
               if (index == 0) {
-                Navigator.of(context).maybePop();
+                Navigator.of(context).popUntil(ModalRoute.withName('/accounts'));
               } else {
                 _notice(context, label);
               }

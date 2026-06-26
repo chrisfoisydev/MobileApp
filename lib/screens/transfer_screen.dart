@@ -142,9 +142,9 @@ class _TransferScreenState extends State<TransferScreen> {
           fromLabel: _fromAccount?.displayName ?? '',
           toLabel: _toAccount?.displayName ?? '',
           dateLabel: 'June ${_selectedDay ?? _todayDay}, 2026',
-          // Done returns all the way to wherever the transfer was launched.
+          // Done returns to the account summary.
           onDone: () =>
-              Navigator.of(context).popUntil((route) => route.isFirst),
+              Navigator.of(context).popUntil(ModalRoute.withName('/accounts')),
         ),
       ),
     );

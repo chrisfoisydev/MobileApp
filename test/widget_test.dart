@@ -350,6 +350,25 @@ void main() {
     expect(find.text('Personalization'), findsOneWidget);
   });
 
+  testWidgets('More footer Accounts tab returns to the summary',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      initialRoute: '/accounts',
+      routes: {'/accounts': (_) => const AccountSummaryScreen()},
+    ));
+    await tester.pumpAndSettle();
+
+    // Footer -> More, then footer -> Accounts should land back on the
+    // summary (not the login).
+    await tester.tap(find.text('MORE'));
+    await tester.pumpAndSettle();
+    expect(find.text('Statements & Documents'), findsOneWidget);
+
+    await tester.tap(find.text('ACCOUNTS'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Good Afternoon'), findsOneWidget);
+  });
+
   testWidgets('More -> Manage Cards opens the cards hub', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: MoreScreen()));
     await tester.pumpAndSettle();

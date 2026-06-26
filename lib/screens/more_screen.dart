@@ -32,7 +32,7 @@ class _MoreScreenState extends State<MoreScreen> {
   void _onNavSelect(int index, String label) {
     switch (index) {
       case 0:
-        Navigator.of(context).popUntil((r) => r.isFirst);
+        Navigator.of(context).popUntil(ModalRoute.withName('/accounts'));
       case 1:
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const MoveMoneyScreen()),

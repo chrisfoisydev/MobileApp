@@ -18,7 +18,10 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _signIn() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const AccountSummaryScreen()),
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/accounts'),
+        builder: (_) => const AccountSummaryScreen(),
+      ),
     );
   }
 
